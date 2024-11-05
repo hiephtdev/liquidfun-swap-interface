@@ -1,7 +1,6 @@
 // pages/api/swap.js
 
 import { ethers } from "ethers";
-import axios from "axios";
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -21,15 +20,24 @@ export default async function handler(req, res) {
 
         const apiUrl = `https://api.liquid.fun/v1/swap/rate?chainId=${chainId}&src=${srcToken}&dest=${destToken}&destAmount=${destAmount}&platformWallet=${platformWallet}&userAddress=${userAddress}`;
 
-        const response = await axios.get(apiUrl, {
+        // Sử dụng fetch để gọi API với các headers cần thiết
+        const response = await fetch(apiUrl, {
+            method: "GET",
             headers: {
                 Accept: "application/json, text/plain, */*",
                 Authorization: `Bearer ${process.env.NEXT_PUBLIC_ACCESS_TOKEN}`,
             },
         });
 
-        const data = response.data.rates[0].txObject.data;
-        const ethAmount = response.data.rates[0].amount;
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Lỗi API:", errorText);
+            return res.status(response.status).json({ error: "Lỗi khi gọi API", details: errorText });
+        }
+
+        const responseData = await response.json();
+        const data = responseData.rates[0].txObject.data;
+        const ethAmount = responseData.rates[0].amount;
 
         const tx = {
             to: platformWallet,
