@@ -202,6 +202,15 @@ export default function Home() {
         }
       }
 
+      if (state.isBuyMode && state.srcToken !== ethers.ZeroAddress && state.srcToken !== chainsConfig[state.chainId]?.tokens.WETH) {
+        const tokenContract = new ethers.Contract(state.srcToken, ["function approve(address spender, uint256 amount)", "function allowance(address owner, address spender) view returns (uint256)"], wallet);
+        const allowance = await tokenContract.allowance(userAddress, state.platformWallet);
+        if (parseInt(allowance) < parseInt(ethAmount)) {
+          const approveTx = await tokenContract.approve(state.platformWallet, ethAmount);
+          await approveTx.wait();
+        }
+      }
+
       // const tx = await multicallContract.multicall(dataWithoutSelector, { value: txValue });
       const tx = {
         to: state.platformWallet,
