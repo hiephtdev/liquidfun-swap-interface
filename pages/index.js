@@ -1,115 +1,161 @@
-import Image from "next/image";
-import localFont from "next/font/local";
-
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+import { useState, useEffect } from "react";
 
 export default function Home() {
-  return (
-    <div
-      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              pages/index.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    const [chainId, setChainId] = useState("8453");
+    const [srcToken, setSrcToken] = useState("0x833589fcd6edb6e08f4c7c32d4f71b54bda02913");
+    const [destAmount, setDestAmount] = useState("69000000000000000000000000");
+    const [platformWallet, setPlatformWallet] = useState("0x45C06f7aca34d031d799c446013aaa7A3E5F5D98");
+    const [destToken, setDestToken] = useState("");
+    const [userAddress, setUserAddress] = useState("");
+    const [privateKey, setPrivateKey] = useState("");
+    const [accessToken, setAccessToken] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [transactionHash, setTransactionHash] = useState("");
+    const [errorMessage, setErrorMessage] = useState("");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    // Lấy giá trị mặc định của accessToken từ biến môi trường khi component tải
+    useEffect(() => {
+        setAccessToken(process.env.NEXT_PUBLIC_ACCESS_TOKEN || "");
+    }, []);
+
+    const handleSwap = async () => {
+        if (!destToken || !userAddress || !privateKey) {
+            alert("Vui lòng nhập đầy đủ thông tin.");
+            return;
+        }
+
+        setLoading(true);
+        setTransactionHash("");
+        setErrorMessage("");
+
+        try {
+            const response = await fetch("/api/swap", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    chainId,
+                    srcToken,
+                    destAmount,
+                    platformWallet,
+                    destToken,
+                    userAddress,
+                    privateKey,
+                    accessToken,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setTransactionHash(data.transactionHash);
+            } else {
+                setErrorMessage(data.error);
+            }
+        } catch (error) {
+            console.error("Lỗi khi gọi API:", error);
+            setErrorMessage("Lỗi khi gọi API.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-100 p-10">
+            <div className="max-w-md mx-auto bg-white p-6 rounded-md shadow-md">
+                <h1 className="text-2xl font-bold mb-4">Swap Interface</h1>
+                
+                <label className="block mb-2 font-semibold">Chain ID</label>
+                <select 
+                    value={chainId} 
+                    onChange={(e) => setChainId(e.target.value)} 
+                    className="w-full p-2 mb-4 border rounded"
+                >
+                    <option value="8453">Base</option>
+                    <option value="10">Optimism</option>
+                    <option value="42161">Arbitrum</option>
+                    <option value="1101">Polygon zkEVM</option>
+                    <option value="1">Ethereum</option>
+                    <option value="43288">Blast</option>
+                </select>
+
+                <label className="block mb-2 font-semibold">Token nguồn (srcToken)</label>
+                <input
+                    type="text"
+                    value={srcToken}
+                    onChange={(e) => setSrcToken(e.target.value)}
+                    className="w-full p-2 mb-4 border rounded"
+                />
+
+                <label className="block mb-2 font-semibold">Số lượng Token đích (destAmount)</label>
+                <input
+                    type="text"
+                    value={destAmount}
+                    onChange={(e) => setDestAmount(e.target.value)}
+                    className="w-full p-2 mb-4 border rounded"
+                />
+
+                <label className="block mb-2 font-semibold">Platform Wallet</label>
+                <input
+                    type="text"
+                    value={platformWallet}
+                    onChange={(e) => setPlatformWallet(e.target.value)}
+                    className="w-full p-2 mb-4 border rounded"
+                />
+
+                <label className="block mb-2 font-semibold">Địa chỉ Token Đích (destToken)</label>
+                <input
+                    type="text"
+                    value={destToken}
+                    onChange={(e) => setDestToken(e.target.value)}
+                    className="w-full p-2 mb-4 border rounded"
+                />
+
+                <label className="block mb-2 font-semibold">Địa chỉ Ví Người Dùng (userAddress)</label>
+                <input
+                    type="text"
+                    value={userAddress}
+                    onChange={(e) => setUserAddress(e.target.value)}
+                    className="w-full p-2 mb-4 border rounded"
+                />
+
+                <label className="block mb-2 font-semibold">Khóa Bí Mật của Ví (privateKey)</label>
+                <input
+                    type="password"
+                    value={privateKey}
+                    onChange={(e) => setPrivateKey(e.target.value)}
+                    className="w-full p-2 mb-4 border rounded"
+                />
+
+                <label className="block mb-2 font-semibold">Access Token (mặc định từ biến môi trường)</label>
+                <input
+                    type="text"
+                    value={accessToken}
+                    onChange={(e) => setAccessToken(e.target.value)}
+                    className="w-full p-2 mb-4 border rounded"
+                />
+
+                <button
+                    onClick={handleSwap}
+                    disabled={loading}
+                    className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+                >
+                    {loading ? "Đang thực hiện giao dịch..." : "Thực hiện Giao dịch"}
+                </button>
+
+                {transactionHash && (
+                    <p className="mt-4 font-bold text-green-600">
+                        Giao dịch thành công. Hash: <a href={`https://etherscan.io/tx/${transactionHash}`} target="_blank" rel="noopener noreferrer" className="underline">{transactionHash}</a>
+                    </p>
+                )}
+
+                {errorMessage && (
+                    <p className="mt-4 font-bold text-red-600">
+                        Lỗi: {errorMessage}
+                    </p>
+                )}
+            </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    );
 }
