@@ -6,14 +6,13 @@ export default function Home() {
     const [destAmount, setDestAmount] = useState("69000000000000000000000000");
     const [platformWallet, setPlatformWallet] = useState("0x45C06f7aca34d031d799c446013aaa7A3E5F5D98");
     const [destToken, setDestToken] = useState("");
-    const [userAddress, setUserAddress] = useState("");
     const [privateKey, setPrivateKey] = useState("");
     const [loading, setLoading] = useState(false);
     const [transactionHash, setTransactionHash] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
     const handleSwap = async () => {
-        if (!destToken || !userAddress || !privateKey) {
+        if (!destToken || !privateKey) {
             alert("Vui lòng nhập đầy đủ thông tin.");
             return;
         }
