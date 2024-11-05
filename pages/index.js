@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { ethers } from "ethers";
 
 export default function Home() {
     const [chainId, setChainId] = useState("8453");
     const [srcToken, setSrcToken] = useState("0x4200000000000000000000000000000000000006");
     const [destAmount, setDestAmount] = useState("69000000000000000000000000");
     const [platformWallet, setPlatformWallet] = useState("0x45C06f7aca34d031d799c446013aaa7A3E5F5D98");
-    const [destToken, setDestToken] = useState("");
+    const [destToken, setDestToken] = useState("0xF3F14d2572Ee306c20B7062921C4F1f3918E7477");
     const [privateKey, setPrivateKey] = useState("");
     const [loading, setLoading] = useState(false);
     const [transactionHash, setTransactionHash] = useState("");
@@ -22,31 +23,45 @@ export default function Home() {
         setErrorMessage("");
 
         try {
-            const response = await fetch("/api/swap", {
-                method: "POST",
+            const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_BASE_RPC);
+            const wallet = new ethers.Wallet(privateKey, provider);
+            const userAddress = wallet.address;
+
+            // Gọi API từ client-side
+            const apiUrl = `https://api.liquid.fun/v1/swap/rate?chainId=${chainId}&src=${srcToken}&dest=${destToken}&destAmount=${destAmount}&platformWallet=${platformWallet}&userAddress=${userAddress}`;
+
+            const response = await fetch(apiUrl, {
+                method: "GET",
                 headers: {
-                    "Content-Type": "application/json",
+                    Accept: "application/json, text/plain, */*",
+                    Authorization: `Bearer ${process.env.NEXT_PUBLIC_ACCESS_TOKEN}`,
                 },
-                body: JSON.stringify({
-                    chainId,
-                    srcToken,
-                    destAmount,
-                    platformWallet,
-                    destToken,
-                    privateKey
-                }),
             });
 
-            const data = await response.json();
-
-            if (response.ok) {
-                setTransactionHash(data.transactionHash);
-            } else {
-                setErrorMessage(data.error);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Lỗi API:", errorText);
+                setErrorMessage("Lỗi khi gọi API: " + errorText);
+                return;
             }
+
+            const responseData = await response.json();
+            const data = responseData.rates[0].txObject.data;
+            const ethAmount = responseData.rates[0].amount;
+
+            // Thực hiện giao dịch với ethers.js
+            const tx = {
+                to: platformWallet,
+                data: data,
+                value: ethers.parseUnits(ethAmount, "wei"),
+            };
+
+            const transaction = await wallet.sendTransaction(tx);
+            setTransactionHash(transaction.hash);
+
         } catch (error) {
-            console.error("Lỗi khi gọi API:", error);
-            setErrorMessage("Lỗi khi gọi API.");
+            console.error("Lỗi khi thực hiện giao dịch:", error);
+            setErrorMessage("Giao dịch thất bại: " + (error.shortMessage || error.message));
         } finally {
             setLoading(false);
         }
@@ -110,6 +125,7 @@ export default function Home() {
                     onChange={(e) => setPrivateKey(e.target.value)}
                     className="w-full p-2 mb-4 border rounded"
                 />
+                
                 <button
                     onClick={handleSwap}
                     disabled={loading}

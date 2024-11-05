@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const provider = new ethers.JsonRpcProvider("https://base-mainnet.g.alchemy.com/v2/qengnl668ldAsAnPtlCO6WtOgLzPSh2k");
+        const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_BASE_RPC);
         const wallet = new ethers.Wallet(privateKey, provider);
         const userAddress = wallet.address;
 
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
             method: "GET",
             headers: {
                 Accept: "application/json, text/plain, */*",
-                Authorization: `Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiMHhBMmRDYjVCM2E3ODRmNDc3MjY4N0UyMWI5Mzk1RDRmYjAyMTNiMjUyIl0sImV4cCI6MTczMDk5MjYzNiwiYWRkcmVzcyI6IjB4QTJkQ2I1QjNhNzg0ZjQ3NzI2ODdFMjFiOTM5NUQ0ZmIwMjEzYjI1MiIsImNoYWluVHlwZSI6ImV0aGVyZXVtIn0.PgoNrNJTvnGejohzysgcICPM3ADpmgvPUC4vB6XvFtbOXFvA2qIAgd0ADSPWwzmpFsLzl-cnVvgPNBY6gK1lKg`,
+                Authorization: `Bearer ${process.env.NEXT_PUBLIC_ACCESS_TOKEN}`,
             },
         });
         console.log("API response:", response);
@@ -50,6 +50,6 @@ export default async function handler(req, res) {
         res.status(200).json({ transactionHash: transaction.hash });
     } catch (error) {
         console.error("Lỗi khi thực hiện giao dịch:", error);
-        res.status(500).json({ error: "Giao dịch thất bại", details: error.message });
+        res.status(500).json({ error: "Giao dịch thất bại", details: error.shortMessage || error.message });
     }
 }
