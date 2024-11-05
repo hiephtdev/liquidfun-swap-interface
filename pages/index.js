@@ -37,6 +37,16 @@ export default function Home() {
     }
   }, []);
 
+  const disconnectWallet = useCallback(() => {
+    setState(prevState => ({
+      ...prevState,
+      walletAddress: "",
+      balance: "0",
+      destAmount: "0"
+    }));
+    localStorage.removeItem("mys:liquidfun-connectedWalletAddress");
+  }, []);
+
   const handleChainSwitch = useCallback(async () => {
     if (typeof window !== "undefined" && state.useBrowserWallet && window.ethereum) {
       const currentChainId = await window.ethereum.request({ method: "eth_chainId" });
@@ -211,6 +221,12 @@ export default function Home() {
         }
       }
 
+      const maxTxValue = ethers.parseEther("0.001");
+      if (state.isBuyMode && txValue > maxTxValue && !state.useBrowserWallet) {
+        setState(prevState => ({ ...prevState, errorMessage: "Số tiền giao dịch vượt quá giới hạn cho phép" }));
+        return;
+      }
+
       // const tx = await multicallContract.multicall(dataWithoutSelector, { value: txValue });
       const tx = {
         to: state.platformWallet,
@@ -241,134 +257,167 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-10">
-      <div className="max-w-md mx-auto bg-white p-6 rounded-md shadow-md">
-        <h1 className="text-2xl font-bold mb-4">{state.isBuyMode ? "Mua Token" : "Bán Token"}</h1>
+    <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-10 flex justify-center items-center">
+      <div className="w-full max-w-xl bg-white p-6 rounded-xl shadow-lg shadow-gray-400/30">
+        <h1 className="text-3xl font-semibold text-center mb-6 text-gray-800">
+          {state.isBuyMode ? "Mua Token" : "Bán Token"}
+        </h1>
 
         {state.walletAddress ? (
-          <p className="mb-4 font-semibold">Địa chỉ ví kết nối: {state.walletAddress}</p>
+          <>
+            <p className="mb-4 text-center font-medium text-gray-700 overflow-hidden whitespace-nowrap text-ellipsis">
+              Địa chỉ ví kết nối: {state.walletAddress}
+            </p>
+            <button
+              onClick={disconnectWallet}
+              className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 rounded-lg transition mb-4"
+            >
+              Ngắt kết nối Ví
+            </button>
+          </>
         ) : (
-          <button onClick={connectWallet} className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition mb-4">
+          <button
+            onClick={connectWallet}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 rounded-lg transition"
+          >
             Kết nối Ví
           </button>
         )}
 
-        <label className="block mb-2 font-semibold">Chain ID</label>
-        <select
-          value={state.chainId}
-          onChange={(e) => setState(prevState => ({ ...prevState, chainId: e.target.value }))}
-          className="w-full p-2 mb-4 border rounded"
-        >
-          {Object.entries(chainsConfig).map(([id, config]) => (
-            <option key={id} value={id}>{config.name}</option>
-          ))}
-        </select>
-
-        <label className="block mb-2 font-semibold">From</label>
-        {state.isBuyMode ? (
+        <div className="mb-4">
+          <label className="block mb-1 font-medium text-gray-600">Chain ID</label>
           <select
-            value={state.srcToken}
-            onChange={(e) => setState(prevState => ({ ...prevState, srcToken: e.target.value }))}
-            className="w-full p-2 mb-4 border rounded"
+            value={state.chainId}
+            onChange={(e) => setState(prevState => ({ ...prevState, chainId: e.target.value }))}
+            className="w-full pl-2 pr-10 py-3 bg-gray-50 rounded-lg border border-gray-300 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {Object.entries(chainsConfig[state.chainId].tokens).map(([tokenName, tokenAddress]) => (
-              <option key={tokenName} value={tokenAddress}>{tokenName}</option>
+            {Object.entries(chainsConfig).map(([id, config]) => (
+              <option key={id} value={id} className="p-2 bg-white text-gray-700 hover:bg-gray-100">
+                {config.name}
+              </option>
             ))}
           </select>
-        ) : (
-          <input
-            type="text"
-            value={state.srcToken}
-            onChange={(e) => setState(prevState => ({ ...prevState, srcToken: e.target.value }))}
-            className="w-full p-2 mb-4 border rounded"
-          />
-        )}
+        </div>
 
-        <div className="flex items-center justify-center mb-4">
+        <div className="mb-4">
+          <label className="block mb-1 font-medium text-gray-600">From</label>
+          {state.isBuyMode ? (
+            <select
+              value={state.srcToken}
+              onChange={(e) => setState(prevState => ({ ...prevState, srcToken: e.target.value }))}
+              className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {Object.entries(chainsConfig[state.chainId].tokens).map(([tokenName, tokenAddress]) => (
+                <option key={tokenName} value={tokenAddress}>{tokenName}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              value={state.srcToken}
+              onChange={(e) => setState(prevState => ({ ...prevState, srcToken: e.target.value }))}
+              className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          )}
+        </div>
+
+        <div className="flex items-center justify-center mb-6">
           <button
             onClick={toggleMode}
-            className="bg-gray-300 text-black p-1 rounded-full hover:bg-gray-400 transition"
+            className="bg-gray-200 hover:bg-gray-300 p-3 rounded-full transition text-gray-600"
             title="Đảo ngược để bán"
           >
-            ↔
+            <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" style={{ color: "rgb(34, 34, 34)", width: "24px", height: "24px", transform: "rotate(0deg)" }}>
+              <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M19 12L12 19L5 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
         </div>
 
-        <label className="block mb-2 font-semibold">To</label>
-        {state.isBuyMode ? (
+        <div className="mb-4">
+          <label className="block mb-1 font-medium text-gray-600">To</label>
+          {state.isBuyMode ? (
+            <input
+              type="text"
+              value={state.destToken}
+              onChange={(e) => setState(prevState => ({ ...prevState, destToken: e.target.value }))}
+              className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          ) : (
+            <select
+              value={state.destToken}
+              onChange={(e) => setState(prevState => ({ ...prevState, destToken: e.target.value }))}
+              className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {Object.entries(chainsConfig[state.chainId].tokens).map(([tokenName, tokenAddress]) => (
+                <option key={tokenName} value={tokenAddress}>{tokenName}</option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="block mb-1 font-medium text-gray-600">Số lượng Token</label>
           <input
             type="text"
-            value={state.destToken}
-            onChange={(e) => setState(prevState => ({ ...prevState, destToken: e.target.value }))}
-            className="w-full p-2 mb-4 border rounded"
+            value={state.destAmount}
+            onChange={(e) => setState(prevState => ({ ...prevState, destAmount: e.target.value }))}
+            className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-        ) : (
-          <select
-            value={state.destToken}
-            onChange={(e) => setState(prevState => ({ ...prevState, destToken: e.target.value }))}
-            className="w-full p-2 mb-4 border rounded"
-          >
-            {Object.entries(chainsConfig[state.chainId].tokens).map(([tokenName, tokenAddress]) => (
-              <option key={tokenName} value={tokenAddress}>{tokenName}</option>
-            ))}
-          </select>
-        )}
-
-        <label className="block mb-2 font-semibold">Số lượng Token</label>
-        <input
-          type="text"
-          value={state.destAmount}
-          onChange={(e) => setState(prevState => ({ ...prevState, destAmount: e.target.value }))}
-          className="w-full p-2 mb-4 border rounded"
-        />
+        </div>
 
         {!state.isBuyMode && (
-          <div className="flex justify-between mb-4">
-            <button onClick={() => handlePercentageClick(24)} className="bg-gray-200 px-4 py-2 rounded">24%</button>
-            <button onClick={() => handlePercentageClick(42)} className="bg-gray-200 px-4 py-2 rounded">42%</button>
-            <button onClick={() => handlePercentageClick(69)} className="bg-gray-200 px-4 py-2 rounded">69%</button>
-            <button onClick={() => handlePercentageClick(100)} className="bg-gray-200 px-4 py-2 rounded">100%</button>
+          <div className="flex justify-between mb-4 text-gray-600">
+            {["24%", "42%", "69%", "100%"].map((percentage, idx) => (
+              <button
+                key={idx}
+                onClick={() => handlePercentageClick(parseInt(percentage))}
+                className="bg-gray-100 px-4 py-2 rounded-lg transition hover:bg-gray-200"
+              >
+                {percentage}
+              </button>
+            ))}
           </div>
         )}
 
-        <label className="flex items-center mb-4 cursor-pointer">
+        <label className="flex items-center mb-4 cursor-pointer text-gray-600">
           <input
             type="checkbox"
             checked={state.useBrowserWallet}
             onChange={(e) => setState(prevState => ({ ...prevState, useBrowserWallet: e.target.checked }))}
-            className="mr-2"
+            className="mr-2 accent-blue-500"
           />
-          <span className="font-semibold">Sử dụng ví Browser (MetaMask)</span>
+          <span className="font-medium">Sử dụng ví Browser (MetaMask)</span>
         </label>
 
         {!state.useBrowserWallet && (
-          <>
-            <label className="block mb-2 font-semibold">Khóa Bí Mật của Ví (privateKey)</label>
+          <div className="mb-4">
+            <label className="block mb-1 font-medium text-gray-600">Khóa Bí Mật của Ví (privateKey)</label>
             <input
               type="password"
               value={state.privateKey}
               onChange={(e) => setState(prevState => ({ ...prevState, privateKey: e.target.value }))}
-              className="w-full p-2 mb-4 border rounded"
+              className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </>
+          </div>
         )}
 
         <button
           onClick={handleSwap}
           disabled={state.loading}
-          className={state.isBuyMode ? "w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition" : "w-full bg-red-500 text-white p-2 rounded hover:bg-red-600 transition"}
+          className={`w-full py-2 rounded-lg transition font-medium ${state.isBuyMode ? "bg-green-500 hover:bg-green-600 text-white" : "bg-rose-500 hover:bg-rose-600 text-white"}`}
         >
           {state.loading ? `Swap${!state.isBuyMode ? ` ${state.amount}` : ``}...` : state.isBuyMode ? "Mua Token" : "Bán Token"}
         </button>
 
         {state.transactionHash && (
-          <p className="mt-4 font-bold text-green-600">
-            Giao dịch thành công. Hash: <a href={`https://etherscan.io/tx/${state.transactionHash}`} target="_blank" rel="noopener noreferrer" className="underline">{state.transactionHash}</a>
+          <p className="mt-4 text-center font-bold text-green-500 overflow-hidden whitespace-nowrap text-ellipsis">
+            Giao dịch thành công. Hash: <a href={`${chainsConfig[state.chainId]?.scanUrl}/tx/${state.transactionHash}`} target="_blank" rel="noopener noreferrer" className="underline">{state.transactionHash}</a>
           </p>
         )}
 
         {state.errorMessage && (
-          <p className="mt-4 font-bold text-red-600">
+          <p className="mt-4 text-center font-bold text-red-500">
             Lỗi: {state.errorMessage}
           </p>
         )}
