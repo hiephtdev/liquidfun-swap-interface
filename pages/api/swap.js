@@ -23,8 +23,8 @@ export default async function handler(req, res) {
 
         const response = await axios.get(apiUrl, {
             headers: {
-                accept: "application/json, text/plain, */*",
-                authorization: `Bearer ${process.env.NEXT_PUBLIC_ACCESS_TOKEN}`,
+                Accept: "application/json, text/plain, */*",
+                Authorization: `Bearer ${process.env.NEXT_PUBLIC_ACCESS_TOKEN}`,
             },
         });
 
