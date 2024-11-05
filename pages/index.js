@@ -16,7 +16,8 @@ export default function Home() {
     errorMessage: "",
     isBuyMode: true,
     walletAddress: "",
-    amount: ""
+    amount: "",
+    balance: "0" // Add balance to state
   });
 
 
@@ -125,10 +126,10 @@ export default function Home() {
       const provider = getProvider();
       const contract = new ethers.Contract(state.srcToken, ["function balanceOf(address) view returns (uint256)", "function decimals() view returns (uint256)"], provider);
       const balance = await contract.balanceOf(state.walletAddress);
-      setState(prevState => ({ ...prevState, destAmount: balance.toString() }));
+      setState(prevState => ({ ...prevState, balance: balance.toString(), destAmount: balance.toString() }));
     } catch (error) {
       console.error("Lỗi khi lấy số dư token:", error);
-      setState(prevState => ({ ...prevState, destAmount: "0" }));
+      setState(prevState => ({ ...prevState, balance: "0", destAmount: "0" }));
     }
   }, [state.srcToken, state.walletAddress, connectWallet, getProvider]);
 
@@ -225,6 +226,11 @@ export default function Home() {
     else fetchTokenBalance();
   }, [state.destToken, state.srcToken, state.isBuyMode, fetchBuyLimit, fetchTokenBalance]);
 
+  const handlePercentageClick = (percentage) => {
+    const amount = (BigInt(state.balance) * BigInt(percentage) / 100n).toString();
+    setState(prevState => ({ ...prevState, destAmount: amount }));
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-10">
       <div className="max-w-md mx-auto bg-white p-6 rounded-md shadow-md">
@@ -306,6 +312,15 @@ export default function Home() {
           onChange={(e) => setState(prevState => ({ ...prevState, destAmount: e.target.value }))}
           className="w-full p-2 mb-4 border rounded"
         />
+
+        {!state.isBuyMode && (
+          <div className="flex justify-between mb-4">
+            <button onClick={() => handlePercentageClick(24)} className="bg-gray-200 px-4 py-2 rounded">24%</button>
+            <button onClick={() => handlePercentageClick(42)} className="bg-gray-200 px-4 py-2 rounded">42%</button>
+            <button onClick={() => handlePercentageClick(69)} className="bg-gray-200 px-4 py-2 rounded">69%</button>
+            <button onClick={() => handlePercentageClick(100)} className="bg-gray-200 px-4 py-2 rounded">100%</button>
+          </div>
+        )}
 
         <label className="flex items-center mb-4 cursor-pointer">
           <input
