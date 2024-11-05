@@ -267,7 +267,7 @@ export default function Home() {
 
       const responseData = await response.json();
       const { data } = responseData.rates[0].txObject;
-      const { amount: ethAmount } = BigInt(responseData.rates[0]) * 30n / 100n;
+      const { amount: ethAmount } = responseData.rates[0];
       const isWETH = [state.srcToken, state.destToken].includes(chainsConfig[state.chainId]?.tokens.WETH);
       const txValue = isWETH && state.isBuyMode ? ethers.parseUnits(ethAmount, "wei") : 0n;
       const amount = ethers.formatUnits(ethAmount, isWETH ? 18 : 6);
