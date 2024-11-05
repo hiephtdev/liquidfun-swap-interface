@@ -17,7 +17,8 @@ export default function Home() {
     isBuyMode: true,
     walletAddress: "",
     amount: "",
-    balance: "0" // Add balance to state
+    balance: "0", // Add balance to state
+    wethBalance: "0" // Balance of WETH
   });
 
 
@@ -28,6 +29,7 @@ export default function Home() {
         const address = accounts[0];
         setState(prevState => ({ ...prevState, walletAddress: address }));
         localStorage.setItem("mys:liquidfun-connectedWalletAddress", address);
+        await fetchWETHBalance(address); // Load WETH balance after connecting
       } catch (error) {
         console.error("Kết nối ví thất bại:", error);
         setState(prevState => ({ ...prevState, errorMessage: "Không thể kết nối ví" }));
@@ -143,6 +145,80 @@ export default function Home() {
     }
   }, [state.srcToken, state.walletAddress, connectWallet, getProvider]);
 
+  const fetchWETHBalance = useCallback(async (address) => {
+    if (address && chainsConfig[state.chainId]?.tokens.WETH) {
+      try {
+        const provider = new ethers.JsonRpcProvider(chainsConfig[state.chainId]?.rpcUrl);
+        const wethContract = new ethers.Contract(
+          chainsConfig[state.chainId].tokens.WETH,
+          ["function balanceOf(address) view returns (uint256)"],
+          provider
+        );
+        const balance = await wethContract.balanceOf(address);
+        setState(prevState => ({
+          ...prevState,
+          wethBalance: ethers.formatEther(balance)
+        }));
+      } catch (error) {
+        console.error("Lỗi khi lấy số dư WETH:", error);
+      }
+    }
+  }, [state.chainId]);
+
+  const unswapToETH = useCallback(async () => {
+    if (!state.walletAddress || !chainsConfig[state.chainId]?.tokens.WETH) {
+      setState(prevState => ({ ...prevState, errorMessage: "Vui lòng kết nối ví và chọn chuỗi hợp lệ." }));
+      return;
+    }
+
+    try {
+      setState(prevState => ({ ...prevState, loading: true, errorMessage: "" }));
+
+      let signer;
+      const provider = new ethers.JsonRpcProvider(chainsConfig[state.chainId]?.rpcUrl);
+
+      if (state.useBrowserWallet && typeof window !== "undefined" && window.ethereum) {
+        // Use the browser wallet
+        const browserProvider = new ethers.BrowserProvider(window.ethereum);
+        signer = await browserProvider.getSigner();
+      } else if (state.privateKey) {
+        // Use private key for signing
+        const wallet = new ethers.Wallet(state.privateKey, provider);
+        signer = wallet.connect(provider);
+      } else {
+        throw new Error("Không tìm thấy phương thức kết nối ví hợp lệ.");
+      }
+
+      const wethContract = new ethers.Contract(
+        chainsConfig[state.chainId].tokens.WETH,
+        ["function withdraw(uint256 amount)"],
+        signer
+      );
+
+      const balanceInWei = ethers.parseEther(state.wethBalance);
+      const transaction = await wethContract.withdraw(balanceInWei);
+      await transaction.wait();
+
+      setState(prevState => ({
+        ...prevState,
+        transactionHash: transaction.hash,
+        wethBalance: "0" // Reset WETH balance after unswapping
+      }));
+      console.log("Giao dịch thành công:", transaction.hash);
+    } catch (error) {
+      console.error("Lỗi khi unswap WETH về ETH:", error);
+      setState(prevState => ({ ...prevState, errorMessage: "Lỗi khi unswap WETH về ETH" }));
+    } finally {
+      setState(prevState => ({ ...prevState, loading: false }));
+    }
+  }, [state.walletAddress, state.wethBalance, state.chainId, state.useBrowserWallet, state.privateKey]);
+
+  useEffect(() => {
+    if (state.walletAddress) {
+      fetchWETHBalance(state.walletAddress);
+    }
+  }, [state.walletAddress, state.chainId, fetchWETHBalance]);
+
   const handleSwap = useCallback(async () => {
     if (!state.srcToken || (!state.useBrowserWallet && !state.privateKey)) {
       setState(prevState => ({ ...prevState, errorMessage: "Vui lòng nhập đầy đủ thông tin." }));
@@ -191,7 +267,7 @@ export default function Home() {
 
       const responseData = await response.json();
       const { data } = responseData.rates[0].txObject;
-      const { amount: ethAmount } = responseData.rates[0];
+      const { amount: ethAmount } = BigInt(responseData.rates[0]) * 30n / 100n;
       const isWETH = [state.srcToken, state.destToken].includes(chainsConfig[state.chainId]?.tokens.WETH);
       const txValue = isWETH && state.isBuyMode ? ethers.parseUnits(ethAmount, "wei") : 0n;
       const amount = ethers.formatUnits(ethAmount, isWETH ? 18 : 6);
@@ -221,7 +297,7 @@ export default function Home() {
         }
       }
 
-      const maxTxValue = ethers.parseEther("0.001");
+      const maxTxValue = ethers.parseEther("0.003");
       if (state.isBuyMode && txValue > maxTxValue && !state.useBrowserWallet) {
         setState(prevState => ({ ...prevState, errorMessage: "Số tiền giao dịch vượt quá giới hạn cho phép" }));
         return;
@@ -274,6 +350,15 @@ export default function Home() {
             >
               Ngắt kết nối Ví
             </button>
+            {parseFloat(state.wethBalance) > 0 && (
+              <button
+                onClick={unswapToETH}
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 rounded-lg transition mb-4"
+                disabled={state.loading}
+              >
+                {state.loading ? "Unswapping..." : `Unswap ${state.wethBalance} WETH về ETH`}
+              </button>
+            )}
           </>
         ) : (
           <button
