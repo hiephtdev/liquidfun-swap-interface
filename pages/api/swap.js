@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_BASE_RPC);
+        const provider = new ethers.JsonRpcProvider("https://base-mainnet.g.alchemy.com/v2/qengnl668ldAsAnPtlCO6WtOgLzPSh2k");
         const wallet = new ethers.Wallet(privateKey, provider);
         const userAddress = wallet.address;
 
@@ -25,10 +25,10 @@ export default async function handler(req, res) {
             method: "GET",
             headers: {
                 Accept: "application/json, text/plain, */*",
-                Authorization: `Bearer ${process.env.NEXT_PUBLIC_ACCESS_TOKEN}`,
+                Authorization: `Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiMHhBMmRDYjVCM2E3ODRmNDc3MjY4N0UyMWI5Mzk1RDRmYjAyMTNiMjUyIl0sImV4cCI6MTczMDk5MjYzNiwiYWRkcmVzcyI6IjB4QTJkQ2I1QjNhNzg0ZjQ3NzI2ODdFMjFiOTM5NUQ0ZmIwMjEzYjI1MiIsImNoYWluVHlwZSI6ImV0aGVyZXVtIn0.PgoNrNJTvnGejohzysgcICPM3ADpmgvPUC4vB6XvFtbOXFvA2qIAgd0ADSPWwzmpFsLzl-cnVvgPNBY6gK1lKg`,
             },
         });
-
+        console.log("API response:", response);
         if (!response.ok) {
             const errorText = await response.text();
             console.error("Lỗi API:", errorText);
