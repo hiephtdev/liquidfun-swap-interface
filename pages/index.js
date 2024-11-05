@@ -2,21 +2,15 @@ import { useState, useEffect } from "react";
 
 export default function Home() {
     const [chainId, setChainId] = useState("8453");
-    const [srcToken, setSrcToken] = useState("0x833589fcd6edb6e08f4c7c32d4f71b54bda02913");
+    const [srcToken, setSrcToken] = useState("0x4200000000000000000000000000000000000006");
     const [destAmount, setDestAmount] = useState("69000000000000000000000000");
     const [platformWallet, setPlatformWallet] = useState("0x45C06f7aca34d031d799c446013aaa7A3E5F5D98");
     const [destToken, setDestToken] = useState("");
     const [userAddress, setUserAddress] = useState("");
     const [privateKey, setPrivateKey] = useState("");
-    const [accessToken, setAccessToken] = useState("");
     const [loading, setLoading] = useState(false);
     const [transactionHash, setTransactionHash] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
-
-    // Lấy giá trị mặc định của accessToken từ biến môi trường khi component tải
-    useEffect(() => {
-        setAccessToken(process.env.NEXT_PUBLIC_ACCESS_TOKEN || "");
-    }, []);
 
     const handleSwap = async () => {
         if (!destToken || !userAddress || !privateKey) {
@@ -40,9 +34,7 @@ export default function Home() {
                     destAmount,
                     platformWallet,
                     destToken,
-                    userAddress,
-                    privateKey,
-                    accessToken,
+                    privateKey
                 }),
             });
 
@@ -112,14 +104,6 @@ export default function Home() {
                     className="w-full p-2 mb-4 border rounded"
                 />
 
-                <label className="block mb-2 font-semibold">Địa chỉ Ví Người Dùng (userAddress)</label>
-                <input
-                    type="text"
-                    value={userAddress}
-                    onChange={(e) => setUserAddress(e.target.value)}
-                    className="w-full p-2 mb-4 border rounded"
-                />
-
                 <label className="block mb-2 font-semibold">Khóa Bí Mật của Ví (privateKey)</label>
                 <input
                     type="password"
@@ -127,15 +111,6 @@ export default function Home() {
                     onChange={(e) => setPrivateKey(e.target.value)}
                     className="w-full p-2 mb-4 border rounded"
                 />
-
-                <label className="block mb-2 font-semibold">Access Token (mặc định từ biến môi trường)</label>
-                <input
-                    type="text"
-                    value={accessToken}
-                    onChange={(e) => setAccessToken(e.target.value)}
-                    className="w-full p-2 mb-4 border rounded"
-                />
-
                 <button
                     onClick={handleSwap}
                     disabled={loading}
