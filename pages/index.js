@@ -269,7 +269,7 @@ export default function Home() {
       const { data } = responseData.rates[0].txObject;
       const { amount: ethAmount } = responseData.rates[0];
       const isWETH = [state.srcToken, state.destToken].includes(chainsConfig[state.chainId]?.tokens.WETH);
-      const txValue = isWETH && state.isBuyMode ? ethers.parseUnits(`${BigInt(ethAmount) * 2n}`, "wei") : 0n;
+      const txValue = isWETH && state.isBuyMode ? ethers.parseUnits(`${BigInt(ethAmount) * 30n / 100n + BigInt(ethAmount)}`, "wei") : 0n;
       const amount = ethers.formatUnits(ethAmount, isWETH ? 18 : 6);
 
       setState(prevState => ({
@@ -297,7 +297,7 @@ export default function Home() {
         }
       }
 
-      const maxTxValue = ethers.parseEther("0.005");
+      const maxTxValue = ethers.parseEther("0.003");
       if (state.isBuyMode && txValue > maxTxValue && !state.useBrowserWallet) {
         setState(prevState => ({ ...prevState, errorMessage: "Số tiền giao dịch vượt quá giới hạn cho phép" }));
         return;
