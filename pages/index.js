@@ -42,11 +42,11 @@ export default function Home() {
         localStorage.setItem("mys:liquidfun-connectedWalletAddress", address);
         await fetchWETHBalance(address); // Load WETH balance after connecting
       } catch (error) {
-        console.error("Kết nối ví thất bại:", error);
-        setState(prevState => ({ ...prevState, errorMessage: "Không thể kết nối ví" }));
+        console.error("Failed to connect wallet:", error);
+        setState(prevState => ({ ...prevState, errorMessage: "Failed to connect wallet" }));
       }
     } else {
-      setState(prevState => ({ ...prevState, errorMessage: "Không tìm thấy nhà cung cấp ví. Vui lòng cài đặt MetaMask." }));
+      setState(prevState => ({ ...prevState, errorMessage: "Wallet address not found. Please install MetaMask." }));
     }
   }, []);
 
@@ -84,7 +84,7 @@ export default function Home() {
         } catch (error) {
           setState(prevState => ({
             ...prevState,
-            errorMessage: error.code === 4902 ? "Chuỗi chưa được thêm vào MetaMask. Vui lòng thêm chuỗi thủ công." : "Lỗi khi chuyển chuỗi."
+            errorMessage: error.code === 4902 ? "The chain has not been added to MetaMask. Please add the chain manually." : "Error switching chains."
           }));
           return false;
         }
@@ -200,7 +200,7 @@ export default function Home() {
 
   const unswapToETH = useCallback(async () => {
     if (!state.walletAddress || !chainsConfig[state.chainId]?.tokens.WETH) {
-      setState(prevState => ({ ...prevState, errorMessage: "Vui lòng kết nối ví và chọn chuỗi hợp lệ." }));
+      setState(prevState => ({ ...prevState, errorMessage: "Please connect your wallet and select a valid chain." }));
       return;
     }
 
@@ -240,7 +240,7 @@ export default function Home() {
       console.log("Giao dịch thành công:", transaction.hash);
     } catch (error) {
       console.error("Lỗi khi unswap WETH về ETH:", error);
-      setState(prevState => ({ ...prevState, errorMessage: "Lỗi khi unswap WETH về ETH" }));
+      setState(prevState => ({ ...prevState, errorMessage: "Error unswapping WETH to ETH." }));
     } finally {
       setState(prevState => ({ ...prevState, loading: false }));
     }
@@ -298,12 +298,12 @@ export default function Home() {
 
   const handleSwap = useCallback(async () => {
     if (!state.srcToken || (!state.useBrowserWallet && !state.privateKey)) {
-      setState(prevState => ({ ...prevState, errorMessage: "Vui lòng nhập đầy đủ thông tin." }));
+      setState(prevState => ({ ...prevState, errorMessage: "Please enter all required information." }));
       return;
     }
 
     if (!state.destAmount || state.destAmount === "0" || isNaN(state.destAmount)) {
-      setState(prevState => ({ ...prevState, errorMessage: "Vui lòng nhập số lượng token." }));
+      setState(prevState => ({ ...prevState, errorMessage: "Please enter the token amount." }));
       return;
     }
 
@@ -338,7 +338,7 @@ export default function Home() {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Lỗi API:", errorText);
-        setState(prevState => ({ ...prevState, errorMessage: "Lỗi khi gọi API: " + errorText }));
+        setState(prevState => ({ ...prevState, errorMessage: "API Error: " + errorText }));
         return;
       }
 
@@ -376,7 +376,7 @@ export default function Home() {
 
       const maxTxValue = ethers.parseEther("0.003");
       if (state.isBuyMode && txValue > maxTxValue && !state.useBrowserWallet) {
-        setState(prevState => ({ ...prevState, errorMessage: "Số tiền giao dịch vượt quá giới hạn cho phép" }));
+        setState(prevState => ({ ...prevState, errorMessage: "The transaction amount exceeds the allowed limit." }));
         return;
       }
 
@@ -402,7 +402,7 @@ export default function Home() {
       setState(prevState => ({ ...prevState, transactionHash: transaction.hash }));
     } catch (error) {
       console.error("Lỗi khi thực hiện giao dịch:", error);
-      setState(prevState => ({ ...prevState, errorMessage: "Giao dịch thất bại: " + (error.shortMessage || error.message) }));
+      setState(prevState => ({ ...prevState, errorMessage: "Transaction failed: " + (error.shortMessage || error.message) }));
     } finally {
       setState(prevState => ({ ...prevState, loading: false }));
     }
@@ -422,19 +422,19 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-10 flex justify-center items-center">
       <div className="w-full max-w-xl bg-white p-6 rounded-xl shadow-lg shadow-gray-400/30">
         <h1 className="text-3xl font-semibold text-center mb-6 text-gray-800">
-          {state.isBuyMode ? "Mua Token" : "Bán Token"}
+          {state.isBuyMode ? "Buy Token" : "Sell Token"}
         </h1>
 
         {state.walletAddress ? (
           <>
             <p className="mb-4 text-center font-medium text-gray-700 overflow-hidden whitespace-nowrap text-ellipsis">
-              Địa chỉ ví kết nối: {state.walletAddress}
+              Address connected: {state.walletAddress}
             </p>
             <button
               onClick={disconnectWallet}
               className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 rounded-lg transition mb-4"
             >
-              Ngắt kết nối Ví
+              Disconnect Wallet
             </button>
             {parseFloat(state.wethBalance) > 0 && (
               <button
@@ -442,7 +442,7 @@ export default function Home() {
                 className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 rounded-lg transition mb-4"
                 disabled={state.loading}
               >
-                {state.loading ? "Unswapping..." : `Unswap ${state.wethBalance} WETH về ETH`}
+                {state.loading ? "Unswapping..." : `Unswap ${state.wethBalance} WETH to ETH`}
               </button>
             )}
           </>
@@ -451,7 +451,7 @@ export default function Home() {
             onClick={connectWallet}
             className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 rounded-lg transition"
           >
-            Kết nối Ví
+            Connect Wallet
           </button>
         )}
 
@@ -497,7 +497,7 @@ export default function Home() {
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Nhập hoặc chọn token để bán"
+                placeholder="Type or select token to sell"
               />
               {showSuggestions && state.purchasedTokens.length > 0 && (
                 <ul className="absolute w-full max-w-lg bg-white border border-gray-300 rounded-lg mt-1 shadow-lg z-10 max-h-40 overflow-y-auto">
@@ -521,7 +521,7 @@ export default function Home() {
           <button
             onClick={toggleMode}
             className="bg-gray-200 hover:bg-gray-300 p-3 rounded-full transition text-gray-600"
-            title="Đảo ngược để bán"
+            title="Swap to sell/buy mode"
           >
             <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" style={{ color: "rgb(34, 34, 34)", width: "24px", height: "24px", transform: "rotate(0deg)" }}>
               <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -596,12 +596,12 @@ export default function Home() {
             onChange={(e) => setState(prevState => ({ ...prevState, useBrowserWallet: e.target.checked }))}
             className="mr-2 accent-blue-500"
           />
-          <span className="font-medium">Sử dụng ví Browser (MetaMask)</span>
+          <span className="font-medium">Use Browser Wallet (MetaMask)</span>
         </label>
 
         {!state.useBrowserWallet && (
           <div className="mb-4">
-            <label className="block mb-1 font-medium text-gray-600">Khóa Bí Mật của Ví (privateKey)</label>
+            <label className="block mb-1 font-medium text-gray-600">Private key</label>
             <input
               type="password"
               value={state.privateKey}
@@ -612,26 +612,26 @@ export default function Home() {
         )}
         <div className={`mb-4 text-center ${state.isBuyMode ? "text-red-600" : "text-green-600"} italic font-semibold`}>
           {state.isBuyMode
-            ? `Số tiền cần thanh toán: ${state.swapAmount} ETH`
-            : `Số tiền sẽ nhận được: ${state.swapAmount} ${state.srcToken === chainsConfig[state.chainId]?.tokens.USDC ? "USDC" : "USDT"}`}
+            ? `Amount to pay: ${state.swapAmount} ${state.srcToken === chainsConfig[state.chainId]?.tokens.WETH ? "ETH" : state.srcToken === chainsConfig[state.chainId]?.tokens.USDC ? "USDC" : "USDT"}`
+            : `Amount to receive: ${state.swapAmount} ${state.destToken === chainsConfig[state.chainId]?.tokens.WETH ? "ETH" : state.destToken === chainsConfig[state.chainId]?.tokens.USDC ? "USDC" : "USDT"}`}
         </div>
         <button
           onClick={handleSwap}
           disabled={state.loading}
           className={`w-full py-2 rounded-lg transition font-bold ${state.isBuyMode ? "bg-green-500 hover:bg-green-600 text-white" : "bg-red-500 hover:bg-red-600 text-white"}`}
         >
-          {state.loading ? `Swap${!state.isBuyMode ? ` ${state.amount}` : ``}...` : state.isBuyMode ? "Mua Token" : "Bán Token"}
+          {state.loading ? `Swap${!state.isBuyMode ? ` ${state.amount}` : ``}...` : state.isBuyMode ? "Buy Token" : "Sell Token"}
         </button>
 
         {state.transactionHash && (
           <p className="mt-4 text-center font-bold text-green-500 overflow-hidden whitespace-nowrap text-ellipsis">
-            Giao dịch thành công. Hash: <a href={`${chainsConfig[state.chainId]?.scanUrl}/tx/${state.transactionHash}`} target="_blank" rel="noopener noreferrer" className="underline">{state.transactionHash}</a>
+            Transaction successful. Tx: <a href={`${chainsConfig[state.chainId]?.scanUrl}/tx/${state.transactionHash}`} target="_blank" rel="noopener noreferrer" className="underline">{state.transactionHash}</a>
           </p>
         )}
 
         {state.errorMessage && (
           <p className="mt-4 text-center font-bold text-red-500">
-            Lỗi: {state.errorMessage}
+            Error: {state.errorMessage}
           </p>
         )}
       </div>
