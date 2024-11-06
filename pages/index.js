@@ -18,7 +18,9 @@ export default function Home() {
     walletAddress: "",
     amount: "",
     balance: "0", // Add balance to state
-    wethBalance: "0" // Balance of WETH
+    wethBalance: "0", // Balance of WETH
+    slippage: 10, // Default slippage set to 10%
+    swapAmount: "0",
   });
 
 
@@ -219,6 +221,44 @@ export default function Home() {
     }
   }, [state.walletAddress, state.chainId, fetchWETHBalance]);
 
+  useEffect(() => {
+    const fetchSwapAmount = async () => {
+      if (!state.srcToken || !state.destToken || !state.walletAddress) return;
+
+      try {
+        const userAddress = state.walletAddress;
+        const apiUrl = `https://api.liquid.fun/v1/swap/rate?chainId=${state.chainId}&src=${state.srcToken}&dest=${state.destToken}&${state.isBuyMode ? "destAmount" : "srcAmount"}=${state.destAmount}&platformWallet=${state.platformWallet}&userAddress=${userAddress}`;
+
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            Accept: "application/json, text/plain, */*",
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_ACCESS_TOKEN}`
+          }
+        });
+
+        if (!response.ok) {
+          console.error("API Error:", await response.text());
+          return;
+        }
+
+        const responseData = await response.json();
+        const { amount: ethAmount } = responseData.rates[0];
+        const isWETH = [state.srcToken, state.destToken].includes(chainsConfig[state.chainId]?.tokens.WETH);
+        const amount = ethers.formatUnits(ethAmount, isWETH ? 18 : 6);
+
+        setState(prevState => ({ ...prevState, swapAmount: amount }));
+      } catch (error) {
+        console.error("Error fetching swap amount from API:", error);
+      }
+    };
+
+    fetchSwapAmount(); // Initial fetch
+    const interval = setInterval(fetchSwapAmount, 30000); // Fetch every 30 seconds
+
+    return () => clearInterval(interval); // Clear interval on unmount
+  }, [state.srcToken, state.destToken, state.chainId, state.destAmount, state.isBuyMode, state.walletAddress]);
+
   const handleSwap = useCallback(async () => {
     if (!state.srcToken || (!state.useBrowserWallet && !state.privateKey)) {
       setState(prevState => ({ ...prevState, errorMessage: "Vui lòng nhập đầy đủ thông tin." }));
@@ -269,7 +309,7 @@ export default function Home() {
       const { data } = responseData.rates[0].txObject;
       const { amount: ethAmount } = responseData.rates[0];
       const isWETH = [state.srcToken, state.destToken].includes(chainsConfig[state.chainId]?.tokens.WETH);
-      const txValue = isWETH && state.isBuyMode ? ethers.parseUnits(`${BigInt(ethAmount) * 30n / 100n + BigInt(ethAmount)}`, "wei") : 0n;
+      const txValue = isWETH && state.isBuyMode ? ethers.parseUnits(`${BigInt(ethAmount) * BigInt(state.slippage) / 100n + BigInt(ethAmount)}`, "wei") : 0n;
       const amount = ethers.formatUnits(ethAmount, isWETH ? 18 : 6);
 
       setState(prevState => ({
@@ -465,6 +505,19 @@ export default function Home() {
           </div>
         )}
 
+        <div className="mb-4">
+          <label className="block mb-1 font-medium text-gray-600">Slippage</label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={state.slippage}
+            onChange={(e) => setState(prevState => ({ ...prevState, slippage: parseInt(e.target.value) }))}
+            className="w-full"
+          />
+          <div className="text-center text-gray-700">{state.slippage}%</div>
+        </div>
+
         <label className="flex items-center mb-4 cursor-pointer text-gray-600">
           <input
             type="checkbox"
@@ -486,11 +539,15 @@ export default function Home() {
             />
           </div>
         )}
-
+        <div className={`mb-4 text-center ${state.isBuyMode ? "text-red-600" : "text-green-600"} italic font-semibold`}>
+          {state.isBuyMode
+            ? `Số tiền cần thanh toán: ${state.swapAmount} ETH`
+            : `Số tiền sẽ nhận được: ${state.swapAmount} ${state.srcToken === chainsConfig[state.chainId]?.tokens.USDC ? "USDC" : "USDT"}`}
+        </div>
         <button
           onClick={handleSwap}
           disabled={state.loading}
-          className={`w-full py-2 rounded-lg transition font-medium ${state.isBuyMode ? "bg-green-500 hover:bg-green-600 text-white" : "bg-rose-500 hover:bg-rose-600 text-white"}`}
+          className={`w-full py-2 rounded-lg transition font-bold ${state.isBuyMode ? "bg-green-500 hover:bg-green-600 text-white" : "bg-red-500 hover:bg-red-600 text-white"}`}
         >
           {state.loading ? `Swap${!state.isBuyMode ? ` ${state.amount}` : ``}...` : state.isBuyMode ? "Mua Token" : "Bán Token"}
         </button>
