@@ -428,7 +428,7 @@ export default function Home() {
         {state.walletAddress ? (
           <>
             <p className="mb-4 text-center font-medium text-gray-700 overflow-hidden whitespace-nowrap text-ellipsis">
-              Address connected: {state.walletAddress}
+              Wallet connected: <a href={`${chainsConfig[state.chainId]?.scanUrl}/address/${state.walletAddress}`} target="_blank" rel="noopener noreferrer" className="underline">{state.walletAddress}</a>
             </p>
             <button
               onClick={disconnectWallet}
@@ -553,7 +553,7 @@ export default function Home() {
         </div>
 
         <div className="mb-4">
-          <label className="block mb-1 font-medium text-gray-600">Số lượng Token</label>
+          <label className="block mb-1 font-medium text-gray-600">Amount</label>
           <input
             type="text"
             value={state.destAmount}
