@@ -21,8 +21,17 @@ export default function Home() {
     wethBalance: "0", // Balance of WETH
     slippage: 10, // Default slippage set to 10%
     swapAmount: "0",
+    purchasedTokens: [] // Load initially from localStorage
   });
 
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  // Load purchased tokens from localStorage on the client side
+  useEffect(() => {
+    if (typeof window !== "undefined") { // Ensure we're on the client
+      const storedTokens = JSON.parse(localStorage.getItem("mys:liquidfun-purchasedTokens")) || [];
+      setState((prevState) => ({ ...prevState, purchasedTokens: storedTokens }));
+    }
+  }, []);
 
   const connectWallet = useCallback(async () => {
     if (typeof window !== "undefined" && window.ethereum) {
@@ -50,6 +59,18 @@ export default function Home() {
     }));
     localStorage.removeItem("mys:liquidfun-connectedWalletAddress");
   }, []);
+
+  const addTokenToStorage = (tokenAddress) => {
+    const updatedTokens = [...state.purchasedTokens, tokenAddress];
+    localStorage.setItem("mys:liquidfun-purchasedTokens", JSON.stringify(updatedTokens));
+    setState((prevState) => ({ ...prevState, purchasedTokens: updatedTokens }));
+  };
+
+  const removeTokenFromStorage = (tokenAddress) => {
+    const updatedTokens = state.purchasedTokens.filter((address) => address !== tokenAddress);
+    localStorage.setItem("mys:liquidfun-purchasedTokens", JSON.stringify(updatedTokens));
+    setState((prevState) => ({ ...prevState, purchasedTokens: updatedTokens }));
+  };
 
   const handleChainSwitch = useCallback(async () => {
     if (typeof window !== "undefined" && state.useBrowserWallet && window.ethereum) {
@@ -132,7 +153,17 @@ export default function Home() {
     }
 
     if (!state.srcToken) {
-      setState(prevState => ({ ...prevState, destAmount: "0" }));
+      setState(prevState => ({ ...prevState, balance: "0", destAmount: "0" }));
+      return;
+    }
+
+    if (state.srcToken === ethers.ZeroAddress) {
+      setState(prevState => ({ ...prevState, balance: "0", destAmount: "0" }));
+      return;
+    }
+
+    if (ethers.isAddress(state.srcToken) === false) {
+      setState(prevState => ({ ...prevState, balance: "0", destAmount: "0" }));
       return;
     }
 
@@ -245,11 +276,17 @@ export default function Home() {
         const responseData = await response.json();
         const { amount: ethAmount } = responseData.rates[0];
         const isWETH = [state.srcToken, state.destToken].includes(chainsConfig[state.chainId]?.tokens.WETH);
-        const amount = ethers.formatUnits(ethAmount, isWETH ? 18 : 6);
+        let amount = "0";
+        if (state.isBuyMode) {
+          amount = ethers.formatUnits(`${BigInt(ethAmount) * BigInt(state.slippage) / 100n + BigInt(ethAmount)}`, isWETH ? 18 : 6);
+        } else {
+          amount = ethers.formatUnits(ethAmount, isWETH ? 18 : 6);
+        }
 
         setState(prevState => ({ ...prevState, swapAmount: amount }));
       } catch (error) {
         console.error("Error fetching swap amount from API:", error);
+        setState(prevState => ({ ...prevState, swapAmount: ethers.formatUnits(`0`, isWETH ? 18 : 6) }));
       }
     };
 
@@ -351,6 +388,15 @@ export default function Home() {
       };
 
       const transaction = await wallet.sendTransaction(tx);
+
+      // After a successful buy transaction, add the token to storage
+      if (state.isBuyMode) {
+        addTokenToStorage(state.destToken);
+      } else {
+        if (state.balance === state.destAmount) {
+          removeTokenFromStorage(state.srcToken);
+        }
+      }
       // setTransactionHash(transaction.hash);
       // await tx.wait();
       setState(prevState => ({ ...prevState, transactionHash: transaction.hash }));
@@ -437,13 +483,38 @@ export default function Home() {
               ))}
             </select>
           ) : (
-            <input
-              type="text"
-              value={state.srcToken}
-              onChange={(e) => setState(prevState => ({ ...prevState, srcToken: e.target.value }))}
-              className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          )}
+            // <input
+            //   type="text"
+            //   value={state.srcToken}
+            //   onChange={(e) => setState(prevState => ({ ...prevState, srcToken: e.target.value }))}
+            //   className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            // />
+            <>
+              <input
+                type="text"
+                value={state.srcToken}
+                onChange={(e) => setState(prevState => ({ ...prevState, srcToken: e.target.value }))}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Nhập hoặc chọn token để bán"
+              />
+              {showSuggestions && state.purchasedTokens.length > 0 && (
+                <ul className="absolute w-full max-w-lg bg-white border border-gray-300 rounded-lg mt-1 shadow-lg z-10 max-h-40 overflow-y-auto">
+                  {state.purchasedTokens.map((tokenAddress, index) => (
+                    <li
+                      key={index}
+                      onMouseDown={() => setState(prevState => ({ ...prevState, srcToken: tokenAddress }))}
+                      className="p-2 cursor-pointer hover:bg-gray-100"
+                    >
+                      {tokenAddress}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )
+          }
         </div>
 
         <div className="flex items-center justify-center mb-6">
@@ -510,7 +581,7 @@ export default function Home() {
           <input
             type="range"
             min="0"
-            max="100"
+            max="200"
             value={state.slippage}
             onChange={(e) => setState(prevState => ({ ...prevState, slippage: parseInt(e.target.value) }))}
             className="w-full"
