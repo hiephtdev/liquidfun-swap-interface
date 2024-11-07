@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import LiquidFunPlatform from "./LiquidFunPlatform";
 import WowPlatform from "./WowPlatform";
+import MoonXPlatform from "./MoonXPlatform";
 import { chainsConfig } from "@/constants/common";
 
 export default function Home() {
@@ -176,6 +177,17 @@ export default function Home() {
             />
             Wow Platform
           </label>
+          <label>
+            <input
+              type="radio"
+              name="platform"
+              value="moonx"
+              checked={state.platform === "moonx"}
+              onChange={() => togglePlatform("moonx")}
+              className="mr-2"
+            />
+            MoonX Platform
+          </label>
         </div>
 
         {/* Chọn token gốc với combo box */}
@@ -312,12 +324,25 @@ export default function Home() {
             slippage={state.slippage}
             handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
           />
-        ) : (
+        ) : state.platform === "wow" ? (
           <WowPlatform
+            rpcUrl={chainsConfig[state.chainId]?.rpcUrl}
             isBuyMode={state.isBuyMode}
             wallet={wallet}
             contractAddress={state.isBuyMode ? state.destToken : state.srcToken}
             amount={state.amount}
+            useBrowserWallet={state.useBrowserWallet}
+            handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
+          />
+        ) : (
+          <MoonXPlatform
+            rpcUrl={chainsConfig[state.chainId]?.rpcUrl}
+            isBuyMode={state.isBuyMode}
+            wallet={wallet}
+            tokenAdress={state.isBuyMode ? state.destToken : state.srcToken}
+            slippage={state.slippage}
+            amount={state.amount}
+            useBrowserWallet={state.useBrowserWallet}
             handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
           />
         )}
