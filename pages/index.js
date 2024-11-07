@@ -164,9 +164,9 @@ export default function Home() {
               onChange={() => togglePlatform("liquidfun")}
               className="mr-2"
             />
-            LiquidFun Platform
+            LiquidFun
           </label>
-          <label>
+          <label className="mr-4">
             <input
               type="radio"
               name="platform"
@@ -175,7 +175,7 @@ export default function Home() {
               onChange={() => togglePlatform("wow")}
               className="mr-2"
             />
-            Wow Platform
+            Wow.XYZ
           </label>
           <label>
             <input
@@ -186,7 +186,7 @@ export default function Home() {
               onChange={() => togglePlatform("moonx")}
               className="mr-2"
             />
-            MoonX Platform
+            MoonX Farm
           </label>
         </div>
 
