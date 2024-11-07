@@ -74,21 +74,25 @@ export default function Home() {
   }, [state.srcToken, state.chainId]);
 
   const initializeWallet = useCallback(async () => {
-    const provider = new ethers.JsonRpcProvider(chainsConfig[state.chainId]?.rpcUrl);
-    let selectedWallet;
+    try {
+      const provider = new ethers.JsonRpcProvider(chainsConfig[state.chainId]?.rpcUrl);
+      let selectedWallet;
 
-    if (state.useBrowserWallet && typeof window !== "undefined" && window.ethereum) {
-      const browserProvider = new ethers.BrowserProvider(window.ethereum);
-      selectedWallet = await browserProvider.getSigner();
-      await connectWallet(); // Kết nối MetaMask nếu dùng ví trình duyệt
-    } else if (state.privateKey) {
-      selectedWallet = new ethers.Wallet(state.privateKey, provider);
-    } else {
-      setState(prevState => ({ ...prevState, errorMessage: "No valid wallet connection method found." }));
-      return;
+      if (state.useBrowserWallet && typeof window !== "undefined" && window.ethereum) {
+        const browserProvider = new ethers.BrowserProvider(window.ethereum);
+        selectedWallet = await browserProvider.getSigner();
+        await connectWallet(); // Kết nối MetaMask nếu dùng ví trình duyệt
+      } else if (state.privateKey) {
+        selectedWallet = new ethers.Wallet(state.privateKey, provider);
+      } else {
+        setState(prevState => ({ ...prevState, errorMessage: "No valid wallet connection method found." }));
+        return;
+      }
+      setWallet(selectedWallet);
+    } catch (error) {
+      console.error("Failed to initialize wallet:", error);
+      setState(prevState => ({ ...prevState, errorMessage: "Failed to initialize wallet" }));
     }
-
-    setWallet(selectedWallet);
   }, [state.useBrowserWallet, state.privateKey, state.chainId, connectWallet]);
 
   useEffect(() => {
@@ -142,7 +146,7 @@ export default function Home() {
         ) : (
           <button
             onClick={connectWallet}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 rounded-lg transition"
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 rounded-lg transition mb-4"
           >
             Connect Wallet
           </button>
@@ -256,6 +260,28 @@ export default function Home() {
                 {percentage}
               </button>
             ))}
+          </div>
+        )}
+
+        <label className="flex items-center mb-4 cursor-pointer text-gray-600">
+          <input
+            type="checkbox"
+            checked={state.useBrowserWallet}
+            onChange={(e) => setState(prevState => ({ ...prevState, useBrowserWallet: e.target.checked }))}
+            className="mr-2 accent-blue-500"
+          />
+          <span className="font-medium">Use Browser Wallet (MetaMask)</span>
+        </label>
+
+        {!state.useBrowserWallet && (
+          <div className="mb-4">
+            <label className="block mb-1 font-medium text-gray-600">Private key</label>
+            <input
+              type="password"
+              value={state.privateKey}
+              onChange={(e) => setState(prevState => ({ ...prevState, privateKey: e.target.value }))}
+              className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         )}
 

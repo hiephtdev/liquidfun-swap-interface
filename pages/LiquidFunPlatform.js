@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 
 export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformWallet, srcToken, destToken, chainId, slippage, handleTransactionComplete }) {
-    const [transactionHash, setTransactionHash] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const [displayAmount, setDisplayAmount] = useState("0");
 
@@ -67,7 +66,6 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
                 value: ethers.parseEther(slippageAdjustedAmount.toString()) // Sử dụng giá trị sau khi đã tính slippage cho giao dịch
             });
 
-            setTransactionHash(tx.hash);
             await tx.wait();
             handleTransactionComplete(tx.hash);
         } catch (error) {
@@ -95,8 +93,6 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
                 data: data,
                 value: 0 // Giao dịch bán không yêu cầu gửi giá trị ETH trực tiếp
             });
-
-            setTransactionHash(tx.hash);
             await tx.wait();
             handleTransactionComplete(tx.hash);
         } catch (error) {
@@ -117,10 +113,6 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
                 <button onClick={handleBuy} className="w-full bg-green-500 text-white p-2 rounded">Buy Token on LiquidFun</button>
             ) : (
                 <button onClick={handleSell} className="w-full bg-red-500 text-white p-2 rounded">Sell Token on LiquidFun</button>
-            )}
-
-            {transactionHash && (
-                <p className="text-green-500">Giao dịch thành công. Tx: {transactionHash}</p>
             )}
             {errorMessage && <p className="text-red-500">{errorMessage}</p>}
         </div>
