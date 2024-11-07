@@ -70,7 +70,7 @@ export default function Home() {
       }));
     } catch (error) {
       console.error("Lỗi khi lấy số dư token:", error);
-      setState(prevState => ({ ...prevState, balance: "0" }));
+      setState(prevState => ({ ...prevState, balance: "0", errorMessage: "Error fetching token balance" }));
     }
   }, [state.srcToken, state.chainId]);
 
