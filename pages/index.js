@@ -155,7 +155,7 @@ export default function Home() {
 
         {/* Chọn nền tảng */}
         <div className="flex justify-center mb-6">
-          <label className="mr-4">
+          <label className="mr-4 cursor-pointer">
             <input
               type="radio"
               name="platform"
@@ -166,7 +166,7 @@ export default function Home() {
             />
             LiquidFun
           </label>
-          <label className="mr-4">
+          <label className="mr-4 cursor-pointer">
             <input
               type="radio"
               name="platform"
@@ -177,7 +177,7 @@ export default function Home() {
             />
             Wow.XYZ
           </label>
-          <label>
+          <label className="cursor-pointer">
             <input
               type="radio"
               name="platform"
