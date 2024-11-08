@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
 
-export default function MoonXPlatform({ rpcUrl, isBuyMode, wallet, tokenAdress, slippage, amount, useBrowserWallet, handleTransactionComplete }) {
+export default function MoonXPlatform({ rpcUrl, isBuyMode, wallet, tokenAdress, slippage, amount, useBrowserWallet, handleTransactionComplete, loadBalance }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -46,6 +46,7 @@ export default function MoonXPlatform({ rpcUrl, isBuyMode, wallet, tokenAdress, 
 
             await transaction.wait();
             handleTransactionComplete(transaction.hash);
+            loadBalance(wallet.address);
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch trên MoonX:", error);
             setErrorMessage(`Error executing transaction: ${error.shortMessage ?? error.message ?? error}`);

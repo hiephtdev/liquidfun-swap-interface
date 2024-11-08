@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
 
-export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete }) {
+export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete, loadBalance }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -55,6 +55,7 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
 
             await transaction.wait();
             handleTransactionComplete(transaction.hash);
+            loadBalance(wallet.address);
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch trên Wow:", error);
             setErrorMessage(`Error executing transaction: ${error.shortMessage ?? error.message ?? error}`);

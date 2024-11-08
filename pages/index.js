@@ -433,6 +433,7 @@ export default function Home() {
             destToken={state.destToken}
             chainId={state.chainId}
             slippage={state.slippage}
+            loadBalance={(address) => fetchTokenBalance(address)}
             handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
           />
         ) : state.platform === "wow" ? (
@@ -443,6 +444,7 @@ export default function Home() {
             contractAddress={state.isBuyMode ? state.destToken : state.srcToken}
             amount={state.amount}
             useBrowserWallet={state.useBrowserWallet}
+            loadBalance={(address) => fetchTokenBalance(address)}
             handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
           />
         ) : (
@@ -454,6 +456,7 @@ export default function Home() {
             slippage={state.slippage}
             amount={state.amount}
             useBrowserWallet={state.useBrowserWallet}
+            loadBalance={(address) => fetchTokenBalance(address)}
             handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
           />
         )}

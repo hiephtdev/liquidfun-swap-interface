@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 
-export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformWallet, srcToken, destToken, chainId, slippage, handleTransactionComplete }) {
+export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformWallet, srcToken, destToken, chainId, slippage, handleTransactionComplete, loadBalance }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [displayAmount, setDisplayAmount] = useState("0");
     const [loading, setLoading] = useState(false);
@@ -74,6 +74,7 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
 
             await tx.wait();
             handleTransactionComplete(tx.hash);
+            loadBalance(wallet.address);
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch mua trên LiquidFun:", error);
             setErrorMessage(`Error executing buy transaction on LiquidFun: ${error.shortMessage ?? error.message ?? error}`);
