@@ -56,7 +56,7 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
             handleTransactionComplete(transaction.hash);
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch trên Wow:", error);
-            setErrorMessage("Error executing transaction.");
+            setErrorMessage(`Error executing transaction: ${error.shortMessage ?? error.message ?? error}`);
         } finally {
             setLoading(false);
         }
