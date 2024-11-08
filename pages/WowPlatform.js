@@ -17,6 +17,7 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
     // Hàm xử lý giao dịch
     const handleTransaction = async () => {
         try {
+            setErrorMessage("");
             const contract = getContractInstance();
             let transaction = {};
 
@@ -53,7 +54,7 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
             handleTransactionComplete(transaction.hash);
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch trên Wow:", error);
-            setErrorMessage("Lỗi khi thực hiện giao dịch trên Wow.");
+            setErrorMessage("Error executing transaction.");
         }
     };
 

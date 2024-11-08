@@ -8,6 +8,7 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
     // Hàm để cập nhật giá hiển thị với slippage cho người dùng
     const fetchPrice = async () => {
         try {
+            setErrorMessage("");
             if (!destToken || !srcToken) {
                 return;
             }
@@ -33,7 +34,7 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
             setDisplayAmount(slippageAdjustedAmount.toString());
         } catch (error) {
             console.error("Lỗi khi cập nhật giá hiển thị:", error);
-            setErrorMessage("Lỗi khi cập nhật giá hiển thị.");
+            setErrorMessage("Error updating display price.");
         }
     };
 
@@ -44,6 +45,7 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
 
     const handleBuy = async () => {
         try {
+            setErrorMessage("");
             // Lấy giá trị chính xác cho giao dịch từ API để tránh dữ liệu cũ
             const apiUrl = `https://api.liquid.fun/v1/swap/rate?chainId=${chainId}&src=${srcToken}&dest=${destToken}&destAmount=${amount}`;
             const response = await fetch(apiUrl, {
@@ -70,12 +72,13 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
             handleTransactionComplete(tx.hash);
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch mua trên LiquidFun:", error);
-            setErrorMessage("Lỗi khi thực hiện giao dịch mua trên LiquidFun.");
+            setErrorMessage("Error executing buy transaction on LiquidFun.");
         }
     };
 
     const handleSell = async () => {
         try {
+            setErrorMessage("");
             const apiUrl = `https://api.liquid.fun/v1/swap/rate?chainId=${chainId}&src=${srcToken}&dest=${destToken}&srcAmount=${amount}`;
             const response = await fetch(apiUrl, {
                 method: "GET",
@@ -97,7 +100,7 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
             handleTransactionComplete(tx.hash);
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch bán trên LiquidFun:", error);
-            setErrorMessage("Lỗi khi thực hiện giao dịch bán trên LiquidFun.");
+            setErrorMessage("Error executing sell transaction on LiquidFun.");
         }
     };
 

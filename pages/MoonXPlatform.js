@@ -17,6 +17,7 @@ export default function MoonXPlatform({ rpcUrl, isBuyMode, wallet, tokenAdress, 
     // Hàm xử lý giao dịch
     const handleTransaction = async () => {
         try {
+            setErrorMessage("");
             const contract = getContractInstance();
             let transaction;
 
@@ -34,7 +35,7 @@ export default function MoonXPlatform({ rpcUrl, isBuyMode, wallet, tokenAdress, 
             handleTransactionComplete(transaction.hash);
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch trên MoonX:", error);
-            setErrorMessage("Lỗi khi thực hiện giao dịch trên MoonX.");
+            setErrorMessage("Error executing transaction");
         }
     };
 
