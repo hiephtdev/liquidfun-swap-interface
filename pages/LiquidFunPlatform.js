@@ -10,6 +10,7 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
     const fetchPrice = async () => {
         try {
             setErrorMessage("");
+            handleTransactionComplete("");
             if (!destToken || !srcToken) {
                 return;
             }
@@ -48,6 +49,7 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
         try {
             setLoading(true);
             setErrorMessage("");
+            handleTransactionComplete("");
             // Lấy giá trị chính xác cho giao dịch từ API để tránh dữ liệu cũ
             const apiUrl = `https://api.liquid.fun/v1/swap/rate?chainId=${chainId}&src=${srcToken}&dest=${destToken}&destAmount=${amount}`;
             const response = await fetch(apiUrl, {

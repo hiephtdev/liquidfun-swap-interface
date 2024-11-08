@@ -30,6 +30,7 @@ export default function MoonXPlatform({ rpcUrl, isBuyMode, wallet, tokenAdress, 
         try {
             setLoading(true);
             setErrorMessage("");
+            handleTransactionComplete("");
             const contract = getContractInstance();
             let transaction;
 

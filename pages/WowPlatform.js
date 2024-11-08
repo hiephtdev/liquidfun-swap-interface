@@ -20,6 +20,7 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
         try {
             setLoading(true);
             setErrorMessage("");
+            handleTransactionComplete("");
             const contract = getContractInstance();
             let transaction = {};
 
