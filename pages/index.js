@@ -21,7 +21,9 @@ export default function Home() {
     loading: false,
     transactionHash: "",
     errorMessage: "",
-    balance: "0" // Số dư token để dùng khi bán
+    balance: "0", // Số dư token để dùng khi bán
+    wethBalance: "0", // Balance of WETH
+    ethBalance: "0", // Balance of ETH
   });
 
   const [wallet, setWallet] = useState(null);
@@ -44,6 +46,82 @@ export default function Home() {
     }
   }, []);
 
+  const fetchWETHBalance = useCallback(async (address) => {
+    if (address && chainsConfig[state.chainId]?.tokens.WETH) {
+      try {
+        const provider = getProvider();
+        const wethContract = new ethers.Contract(
+          chainsConfig[state.chainId].tokens.WETH,
+          ["function balanceOf(address) view returns (uint256)"],
+          provider
+        );
+        const [balance, ethBalance] = await Promise.all([await wethContract.balanceOf(address), provider.getBalance(address)]);
+        setState(prevState => ({
+          ...prevState,
+          wethBalance: ethers.formatEther(balance),
+          ethBalance: ethers.formatEther(ethBalance)
+        }));
+      } catch (error) {
+        console.error("Lỗi khi lấy số dư WETH:", error);
+      }
+    }
+  }, [state.chainId]);
+
+  const unswapToETH = useCallback(async () => {
+    if (!state.walletAddress || !chainsConfig[state.chainId]?.tokens.WETH) {
+      setState(prevState => ({ ...prevState, errorMessage: "Please connect your wallet and select a valid chain." }));
+      return;
+    }
+
+    try {
+      setState(prevState => ({ ...prevState, loading: true, errorMessage: "" }));
+
+      let signer;
+      const provider = new ethers.JsonRpcProvider(chainsConfig[state.chainId]?.rpcUrl);
+
+      if (state.useBrowserWallet && typeof window !== "undefined" && window.ethereum) {
+        // Use the browser wallet
+        const browserProvider = new ethers.BrowserProvider(window.ethereum);
+        signer = await browserProvider.getSigner();
+      } else if (state.privateKey) {
+        // Use private key for signing
+        const wallet = new ethers.Wallet(state.privateKey, provider);
+        signer = wallet.connect(provider);
+      } else {
+        throw new Error("Không tìm thấy phương thức kết nối ví hợp lệ.");
+      }
+
+      const wethContract = new ethers.Contract(
+        chainsConfig[state.chainId].tokens.WETH,
+        ["function withdraw(uint256 amount)"],
+        signer
+      );
+
+      const balanceInWei = ethers.parseEther(state.wethBalance);
+      const transaction = await wethContract.withdraw(balanceInWei);
+      await transaction.wait();
+      const ethBalance = ethers.formatEther(await provider.getBalance(state.walletAddress));
+      setState(prevState => ({
+        ...prevState,
+        transactionHash: transaction.hash,
+        wethBalance: "0", // Reset WETH balance after unswapping
+        ethBalance: ethBalance
+      }));
+      console.log("Giao dịch thành công:", transaction.hash);
+    } catch (error) {
+      console.error("Lỗi khi unswap WETH về ETH:", error);
+      setState(prevState => ({ ...prevState, errorMessage: "Error unswapping WETH to ETH." }));
+    } finally {
+      setState(prevState => ({ ...prevState, loading: false }));
+    }
+  }, [state.walletAddress, state.wethBalance, state.ethBalance, state.chainId, state.useBrowserWallet, state.privateKey]);
+
+  useEffect(() => {
+    if (state.walletAddress) {
+      fetchWETHBalance(state.walletAddress);
+    }
+  }, [state.walletAddress, state.chainId, fetchWETHBalance]);
+
   // Ngắt kết nối ví
   const disconnectWallet = useCallback(() => {
     setState(prevState => ({
@@ -55,11 +133,32 @@ export default function Home() {
     localStorage.removeItem("mys:liquidfun-connectedWalletAddress");
   }, []);
 
+  const getProvider = useCallback(() => {
+    const rpcUrl = chainsConfig[state.chainId]?.rpcUrl;
+    return new ethers.JsonRpcProvider(rpcUrl);
+  }, [state.chainId]);
+
+  const fetchBuyLimit = useCallback(async () => {
+    if (state.isBuyMode && state.destToken) {
+      try {
+        const provider = getProvider();
+        const contract = new ethers.Contract(state.destToken, ["function BUY_LIMIT() view returns (uint256)"], provider);
+        const limit = await contract.BUY_LIMIT();
+        setState(prevState => ({ ...prevState, amount: limit.toString() }));
+      } catch (error) {
+        console.error("Lỗi khi lấy BUY_LIMIT:", error);
+        setState(prevState => ({ ...prevState, amount: "0" }));
+      }
+    }
+  }, [state.destToken, state.isBuyMode, getProvider]);
+  useEffect(() => {
+    if (state.isBuyMode && state.platform === "liquidfun") fetchBuyLimit();
+  }, [state.destToken, state.srcToken, state.isBuyMode, fetchBuyLimit]);
   // Lấy lại số dư token của người dùng
   const fetchTokenBalance = useCallback(async (address) => {
     if (!address || !state.srcToken) return;
     try {
-      const provider = new ethers.JsonRpcProvider(chainsConfig[state.chainId]?.rpcUrl);
+      const provider = getProvider();
       const contract = new ethers.Contract(state.srcToken, ["function balanceOf(address) view returns (uint256)"], provider);
       const balance = await contract.balanceOf(address);
 
@@ -76,7 +175,7 @@ export default function Home() {
 
   const initializeWallet = useCallback(async () => {
     try {
-      const provider = new ethers.JsonRpcProvider(chainsConfig[state.chainId]?.rpcUrl);
+      const provider = getProvider();
       let selectedWallet;
 
       if (state.useBrowserWallet && typeof window !== "undefined" && window.ethereum) {
@@ -137,12 +236,24 @@ export default function Home() {
             <p className="mb-4 text-center font-medium text-gray-700 overflow-hidden whitespace-nowrap text-ellipsis">
               Wallet connected: <a href={`${chainsConfig[state.chainId]?.scanUrl}/address/${state.walletAddress}`} target="_blank" rel="noopener noreferrer" className="underline">{state.walletAddress}</a>
             </p>
+            <p className="mb-4 text-center font-medium text-gray-700 overflow-hidden whitespace-nowrap text-ellipsis">
+              Balance: {state.ethBalance} ETH
+            </p>
             <button
               onClick={disconnectWallet}
               className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 rounded-lg transition mb-4"
             >
               Disconnect Wallet
             </button>
+            {parseFloat(state.wethBalance) > 0 && (
+              <button
+                onClick={unswapToETH}
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 rounded-lg transition mb-4"
+                disabled={state.loading}
+              >
+                {state.loading ? "Unswapping..." : `Unswap ${state.wethBalance} WETH to ETH`}
+              </button>
+            )}
           </>
         ) : (
           <button

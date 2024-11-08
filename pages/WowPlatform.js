@@ -3,6 +3,7 @@ import { ethers } from "ethers";
 
 export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete }) {
     const [errorMessage, setErrorMessage] = useState("");
+    const [loading, setLoading] = useState(false);
 
     // Hàm tạo instance của contract, sử dụng trực tiếp `wallet` đã cấu hình
     const getContractInstance = () => new ethers.Contract(
@@ -17,6 +18,7 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
     // Hàm xử lý giao dịch
     const handleTransaction = async () => {
         try {
+            setLoading(true);
             setErrorMessage("");
             const contract = getContractInstance();
             let transaction = {};
@@ -55,6 +57,8 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch trên Wow:", error);
             setErrorMessage("Error executing transaction.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -115,9 +119,10 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
         <div>
             <button
                 onClick={handleTransaction}
+                disabled={loading}
                 className={`w-full p-2 rounded ${isBuyMode ? "bg-green-500" : "bg-red-500"} text-white font-medium`}
             >
-                {isBuyMode ? "Buy Token on Wow" : "Sell Token on Wow"}
+                {loading ? isBuyMode ? "Buy..." : "Sell..." : isBuyMode ? "Buy Token on Wow" : "Sell Token on Wow"}
             </button>
             {errorMessage && (
                 <p className="text-red-500 mt-4">{errorMessage}</p>

@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformWallet, srcToken, destToken, chainId, slippage, handleTransactionComplete }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [displayAmount, setDisplayAmount] = useState("0");
+    const [loading, setLoading] = useState(false);
 
     // Hàm để cập nhật giá hiển thị với slippage cho người dùng
     const fetchPrice = async () => {
@@ -45,6 +46,7 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
 
     const handleBuy = async () => {
         try {
+            setLoading(true);
             setErrorMessage("");
             // Lấy giá trị chính xác cho giao dịch từ API để tránh dữ liệu cũ
             const apiUrl = `https://api.liquid.fun/v1/swap/rate?chainId=${chainId}&src=${srcToken}&dest=${destToken}&destAmount=${amount}`;
@@ -73,6 +75,8 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch mua trên LiquidFun:", error);
             setErrorMessage("Error executing buy transaction on LiquidFun.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -113,9 +117,9 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
             </div>
 
             {isBuyMode ? (
-                <button onClick={handleBuy} className="w-full bg-green-500 text-white p-2 rounded">Buy Token on LiquidFun</button>
+                <button disabled={loading} onClick={handleBuy} className="w-full bg-green-500 text-white p-2 rounded">{loading ? "Buy ..." : "Buy Token on LiquidFun"}</button>
             ) : (
-                <button onClick={handleSell} className="w-full bg-red-500 text-white p-2 rounded">Sell Token on LiquidFun</button>
+                <button disabled={loading} onClick={handleSell} className="w-full bg-red-500 text-white p-2 rounded">{loading ? "Sell ..." : "Sell Token on LiquidFun"}</button>
             )}
             {errorMessage && <p className="text-red-500">{errorMessage}</p>}
         </div>
