@@ -6,7 +6,7 @@ export default function MoonXPlatform({ rpcUrl, isBuyMode, wallet, tokenAdress, 
 
     // Hàm tạo instance của contract, sử dụng trực tiếp `wallet` đã cấu hình
     const getContractInstance = () => new ethers.Contract(
-        "0x3D60C944abAF410ec3ad0F2392Eb4A8EC4cc4568",
+        process.env.NEXT_PUBLIC_MOONX_CONTRACT_ADDRESS,
         [
             "function moonXBuy(address tokenOut, uint8 slippagePercentage, address referrer) external payable",
             "function moonXSell(address tokenIn, uint256[2] amountIns, uint8 slippagePercentage, address referrer) external"
@@ -24,7 +24,7 @@ export default function MoonXPlatform({ rpcUrl, isBuyMode, wallet, tokenAdress, 
                 // Giao dịch khi dùng ví trên trình duyệt
                 transaction = isBuyMode
                     ? await contract.moonXBuy(tokenAdress, slippage, ethers.ZeroAddress, { value: ethers.parseEther(amount) })
-                    : await contract.moonXSell(tokenAdress, [0, amount], slippage, ethers.ZeroAddress);
+                    : await contract.moonXSell(tokenAdress, [0n, amount], slippage, ethers.ZeroAddress);
             } else {
                 // Giao dịch khi dùng RPC, cần tính toán gas và thiết lập gas limit
                 transaction = await executeTransaction(contract, isBuyMode);
@@ -61,7 +61,7 @@ export default function MoonXPlatform({ rpcUrl, isBuyMode, wallet, tokenAdress, 
         } else {
             const estimatedGas = await contract.moonXSell.estimateGas(
                 tokenAdress, 
-                [0, amount], 
+                [0n, amount], 
                 slippage, 
                 ethers.ZeroAddress
             );
@@ -69,7 +69,7 @@ export default function MoonXPlatform({ rpcUrl, isBuyMode, wallet, tokenAdress, 
 
             return await contract.moonXSell(
                 tokenAdress, 
-                [0, amount], 
+                [0n, amount], 
                 slippage, 
                 ethers.ZeroAddress, 
                 { gasLimit, gasPrice: gasData.gasPrice * 2n }
