@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 
-export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformWallet, srcToken, destToken, chainId, slippage, handleTransactionComplete, loadBalance }) {
+export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformWallet, srcToken, destToken, chainId, slippage, handleTransactionComplete, loadBalance, addTokenToStorage }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [displayAmount, setDisplayAmount] = useState("0");
     const [loading, setLoading] = useState(false);
@@ -67,7 +67,7 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
 
             // Tính toán slippage cho giá trị giao dịch thực tế
             const slippageAdjustedAmount = BigInt(apiAmount) * BigInt(100 + slippage) / 100n;
-
+            addTokenToStorage(destToken);
             const tx = await wallet.sendTransaction({
                 to: platformWallet,
                 data: data,

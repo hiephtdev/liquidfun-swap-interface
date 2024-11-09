@@ -24,7 +24,60 @@ export default function Home() {
     balance: "0", // Số dư token để dùng khi bán
     wethBalance: "0", // Balance of WETH
     ethBalance: "0", // Balance of ETH
+    purchasedTokens: [], // Load initially from localStorage
+    symbolSuggestion: null,
   });
+
+
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  // Load purchased tokens from localStorage on the client side
+  useEffect(() => {
+    if (typeof window !== "undefined") { // Ensure we're on the client
+      const storedTokens = JSON.parse(localStorage.getItem(`mys:${state.platform}-purchasedTokens`)) || [];
+      setState((prevState) => ({ ...prevState, purchasedTokens: storedTokens }));
+    }
+  }, [state.platform]);
+
+  const addTokenToStorage = async (tokenAddress) => {
+    try {
+      if (state.purchasedTokens.find(token => token.address === tokenAddress)) return;
+      const provider = getProvider();
+      const contract = new ethers.Contract(
+        tokenAddress,
+        ["function symbol() view returns (string)"],
+        provider
+      );
+      const symbol = await contract.symbol();
+      const newToken = { address: tokenAddress, symbol };
+      const updatedTokens = [...state.purchasedTokens, newToken];
+      localStorage.setItem(`mys:${state.platform}-purchasedTokens`, JSON.stringify(updatedTokens));
+      setState((prevState) => ({ ...prevState, purchasedTokens: updatedTokens }));
+    } catch (error) {
+      console.error("Error fetching token symbol:", error);
+      setState((prevState) => ({ ...prevState, errorMessage: "Failed to add token" }));
+    }
+  };
+
+  const fetchTokenSymbol = async (tokenAddress) => {
+    const isAlreadyStored = state.purchasedTokens.find(token => token.address === tokenAddress);
+    if (isAlreadyStored) {
+      setState(prevState => ({ ...prevState, symbolSuggestion: isAlreadyStored.symbol }));
+      return;
+    }
+
+    try {
+      const provider = getProvider();
+      const contract = new ethers.Contract(
+        tokenAddress,
+        ["function symbol() view returns (string)"],
+        provider
+      );
+      const symbol = await contract.symbol();
+      setState(prevState => ({ ...prevState, symbolSuggestion: symbol, errorMessage: "" }));
+    } catch {
+      setState(prevState => ({ ...prevState, symbolSuggestion: "Not found", errorMessage: "" }));
+    }
+  };
 
   const [wallet, setWallet] = useState(null);
 
@@ -336,12 +389,59 @@ export default function Home() {
               ))}
             </select>
           ) : (
-            <input
-              type="text"
-              value={state.srcToken}
-              onChange={(e) => setState(prevState => ({ ...prevState, srcToken: e.target.value }))}
-              className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <>
+              <input
+                type="text"
+                value={state.srcToken}
+                onChange={(e) => {
+                  const tokenAddress = e.target.value;
+                  setState(prevState => ({ ...prevState, srcToken: tokenAddress }));
+                  if (tokenAddress.length === 42) {
+                    fetchTokenSymbol(tokenAddress);
+                  } else {
+                    setState(prevState => ({ ...prevState, symbolSuggestion: null }));
+                  }
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Type or select token to sell"
+              />
+              {showSuggestions && (state.purchasedTokens.length > 0 || state.symbolSuggestion) && (
+                <ul className="absolute w-full max-w-lg bg-white border border-gray-300 rounded-lg mt-1 shadow-lg z-10 max-h-40 overflow-y-auto">
+                  {state.symbolSuggestion ? (
+                    state.symbolSuggestion !== "Not found" ? (
+                      <li
+                        onMouseDown={() => {
+                          setState(prevState => ({ ...prevState, srcToken: state.srcToken, symbolSuggestion: null }));
+                        }}
+                        className="p-2 cursor-pointer hover:bg-gray-100"
+                      >
+                        {state.symbolSuggestion ? `${state.symbolSuggestion} (${state.srcToken})` : "Not found"}
+                      </li>
+                    ) : (
+                      <li className="p-2 text-red-500">Not found</li>
+                    )
+                  ) : (
+                    state.purchasedTokens.map((token, index) => (
+                      <li
+                        key={index}
+                        onMouseDown={() => setState(prevState => ({ ...prevState, srcToken: token.address }))}
+                        className="p-2 cursor-pointer hover:bg-gray-100"
+                      >
+                        {token.symbol ? `${token.symbol} (${token.address})` : "Not found"}
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+            </>
+            // <input
+            //   type="text"
+            //   value={state.srcToken}
+            //   onChange={(e) => setState(prevState => ({ ...prevState, srcToken: e.target.value }))}
+            //   className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            // />
           )}
         </div>
 
@@ -373,12 +473,59 @@ export default function Home() {
               ))}
             </select>
           ) : (
-            <input
-              type="text"
-              value={state.destToken}
-              onChange={(e) => setState(prevState => ({ ...prevState, destToken: e.target.value }))}
-              className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <>
+              <input
+                type="text"
+                value={state.destToken}
+                onChange={(e) => {
+                  const tokenAddress = e.target.value;
+                  setState(prevState => ({ ...prevState, destToken: tokenAddress }));
+                  if (tokenAddress.length === 42) {
+                    fetchTokenSymbol(tokenAddress);
+                  } else {
+                    setState(prevState => ({ ...prevState, symbolSuggestion: null }));
+                  }
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Type or select token to sell"
+              />
+              {showSuggestions && (state.purchasedTokens.length > 0 || state.symbolSuggestion) && (
+                <ul className="absolute w-full max-w-lg bg-white border border-gray-300 rounded-lg mt-1 shadow-lg z-10 max-h-40 overflow-y-auto">
+                  {state.symbolSuggestion ? (
+                    state.symbolSuggestion !== "Not found" ? (
+                      <li
+                        onMouseDown={() => {
+                          setState(prevState => ({ ...prevState, destToken: state.destToken, symbolSuggestion: null }));
+                        }}
+                        className="p-2 cursor-pointer hover:bg-gray-100"
+                      >
+                        {state.symbolSuggestion ? `${state.symbolSuggestion} (${state.destToken})` : "Not found"}
+                      </li>
+                    ) : (
+                      <li className="p-2 text-red-500">Not found</li>
+                    )
+                  ) : (
+                    state.purchasedTokens.map((token, index) => (
+                      <li
+                        key={index}
+                        onMouseDown={() => setState(prevState => ({ ...prevState, destToken: token.address }))}
+                        className="p-2 cursor-pointer hover:bg-gray-100"
+                      >
+                        {token.symbol ? `${token.symbol} (${token.address})` : "Not found"}
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+            </>
+            // <input
+            //   type="text"
+            //   value={state.destToken}
+            //   onChange={(e) => setState(prevState => ({ ...prevState, destToken: e.target.value }))}
+            //   className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            // />
           )}
         </div>
 
@@ -453,10 +600,11 @@ export default function Home() {
             srcToken={state.srcToken}
             destToken={state.destToken}
             chainId={state.chainId}
-            slippage={state.slippage}            
+            slippage={state.slippage}
             handleChainSwitch={handleChainSwitch}
             loadBalance={(address) => fetchTokenBalance(address)}
             handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
+            addTokenToStorage={(address) => addTokenToStorage(address)}
           />
         ) : state.platform === "wow" ? (
           <WowPlatform
@@ -469,6 +617,7 @@ export default function Home() {
             loadBalance={(address) => fetchTokenBalance(address)}
             handleChainSwitch={handleChainSwitch}
             handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
+            addTokenToStorage={(address) => addTokenToStorage(address)}
           />
         ) : (
           <MoonXPlatform
@@ -482,6 +631,7 @@ export default function Home() {
             handleChainSwitch={handleChainSwitch}
             loadBalance={(address) => fetchTokenBalance(address)}
             handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
+            addTokenToStorage={(address) => addTokenToStorage(address)}
           />
         )}
 

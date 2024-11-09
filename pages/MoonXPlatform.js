@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
 
-export default function MoonXPlatform({ rpcUrl, isBuyMode, wallet, tokenAdress, slippage, amount, useBrowserWallet, handleTransactionComplete, loadBalance }) {
+export default function MoonXPlatform({ rpcUrl, isBuyMode, wallet, tokenAdress, slippage, amount, useBrowserWallet, handleTransactionComplete, loadBalance, addTokenToStorage }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -35,6 +35,10 @@ export default function MoonXPlatform({ rpcUrl, isBuyMode, wallet, tokenAdress, 
             if (!chainSwitched) return;
             const contract = getContractInstance();
             let transaction;
+
+            if (isBuyMode) {
+                addTokenToStorage(tokenAdress);
+            }
 
             if (useBrowserWallet) {
                 // Thực hiện giao dịch khi dùng ví trên trình duyệt

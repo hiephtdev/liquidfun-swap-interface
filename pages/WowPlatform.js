@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
 
-export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete, loadBalance, handleChainSwitch }) {
+export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete, loadBalance, handleChainSwitch, addTokenToStorage }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -25,6 +25,10 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
             if (!chainSwitched) return;
             const contract = getContractInstance();
             let transaction = {};
+
+            if (isBuyMode) {
+                addTokenToStorage(contractAddress);
+            }
 
             if (useBrowserWallet) {
                 // Giao dịch khi dùng ví trên trình duyệt
