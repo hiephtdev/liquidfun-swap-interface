@@ -31,6 +31,8 @@ export default function MoonXPlatform({ rpcUrl, isBuyMode, wallet, tokenAdress, 
             setLoading(true);
             setErrorMessage("");
             handleTransactionComplete("");
+            const chainSwitched = await handleChainSwitch();
+            if (!chainSwitched) return;
             const contract = getContractInstance();
             let transaction;
 

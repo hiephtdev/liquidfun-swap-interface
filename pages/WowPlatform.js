@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
 
-export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete, loadBalance }) {
+export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete, loadBalance, handleChainSwitch }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -21,6 +21,8 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
             setLoading(true);
             setErrorMessage("");
             handleTransactionComplete("");
+            const chainSwitched = await handleChainSwitch();
+            if (!chainSwitched) return;
             const contract = getContractInstance();
             let transaction = {};
 

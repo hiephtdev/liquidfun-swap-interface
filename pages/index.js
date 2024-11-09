@@ -173,6 +173,27 @@ export default function Home() {
     }
   }, [state.srcToken, state.chainId]);
 
+  const handleChainSwitch = useCallback(async () => {
+    if (typeof window !== "undefined" && state.useBrowserWallet && window.ethereum) {
+      const currentChainId = await window.ethereum.request({ method: "eth_chainId" });
+      if (currentChainId !== `0x${parseInt(state.chainId, 10).toString(16)}`) {
+        try {
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: `0x${parseInt(state.chainId, 10).toString(16)}` }]
+          });
+        } catch (error) {
+          setState(prevState => ({
+            ...prevState,
+            errorMessage: error.code === 4902 ? "The chain has not been added to MetaMask. Please add the chain manually." : "Error switching chains."
+          }));
+          return false;
+        }
+      }
+    }
+    return true;
+  }, [state.chainId, state.useBrowserWallet]);
+
   const initializeWallet = useCallback(async () => {
     try {
       const provider = getProvider();
@@ -432,7 +453,8 @@ export default function Home() {
             srcToken={state.srcToken}
             destToken={state.destToken}
             chainId={state.chainId}
-            slippage={state.slippage}
+            slippage={state.slippage}            
+            handleChainSwitch={handleChainSwitch}
             loadBalance={(address) => fetchTokenBalance(address)}
             handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
           />
@@ -445,6 +467,7 @@ export default function Home() {
             amount={state.amount}
             useBrowserWallet={state.useBrowserWallet}
             loadBalance={(address) => fetchTokenBalance(address)}
+            handleChainSwitch={handleChainSwitch}
             handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
           />
         ) : (
@@ -456,6 +479,7 @@ export default function Home() {
             slippage={state.slippage}
             amount={state.amount}
             useBrowserWallet={state.useBrowserWallet}
+            handleChainSwitch={handleChainSwitch}
             loadBalance={(address) => fetchTokenBalance(address)}
             handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
           />
