@@ -367,6 +367,13 @@ export default function Home() {
 
   return (
     <>
+      <Head>
+        <meta property="fc:frame" content="vNext" />
+        <meta property="fc:frame:image" content="https://fun.moonx.farm/card.jpg" />
+        <meta property="fc:frame:button:1" content="Trade Now" />
+        <meta property="fc:frame:button:1:action" content="link" />
+        <meta property="fc:frame:button:1:target" content={`https://fun.moonx.farm/?ref=${state.ref}`} />
+      </Head>
       <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-10 flex justify-center items-center">
         <div className="w-full max-w-xl bg-white p-6 rounded-xl shadow-lg shadow-gray-400/30 relative">
           {/* Thêm logo ở đầu giao diện */}
@@ -739,28 +746,28 @@ export default function Home() {
 
           {/* Display referral link with copy and share buttons */}
           {state.walletAddress && (
-            <div class="flex justify-between items-center text-gray-800 mt-5">
-              <div class="flex items-center space-x-2">
+            <div className="flex justify-between items-center text-gray-800 mt-5">
+              <div className="flex items-center space-x-2">
                 <button onClick={() => { window.open("https://x.com/MoonXFarm", '_blank'); }}>
-                  <i class="fab fa-twitter text-blue-500"></i>
+                  <i className="fab fa-twitter text-blue-500"></i>
                 </button>
                 <button onClick={() => { window.open("https://discord.gg/x9f4vkvu", '_blank'); }}>
-                  <i class="fab fa-discord text-indigo-600"></i>
+                  <i className="fab fa-discord text-indigo-600"></i>
                 </button>
                 <button onClick={() => { window.open("https://t.me/MoonXFarm", '_blank'); }}>
-                  <i class="fab fa-telegram text-blue-400"></i>
+                  <i className="fab fa-telegram text-blue-400"></i>
                 </button>
               </div>
-              <div class="flex items-center space-x-2">
+              <div className="flex items-center space-x-2">
                 <span>Share your link ref</span>
                 <button onClick={handleCopyLink}>
-                  <i class="fas fa-copy cursor-pointer"></i>
+                  <i className="fas fa-copy cursor-pointer"></i>
                 </button>
                 <button onClick={handleShareOnX}>
-                  <i class="fab fa-twitter text-blue-500"></i>
+                  <i className="fab fa-twitter text-blue-500"></i>
                 </button>
                 <button onClick={handleShareOnWarpcast}>
-                  <FarcasterShareIcon class="text-[#8660cd]" />
+                  <FarcasterShareIcon className="text-[#8660cd]" />
                 </button>
               </div>
             </div>

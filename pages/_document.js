@@ -15,13 +15,6 @@ export default function Document() {
       <meta name="twitter:description" content="Connect your MetaMask wallet and trade tokens like WETH, USDC, USDT on LiquidFun and Wow.XYZ or add liquidity on DEX platforms similar to Uniswap." />
       <meta name="twitter:image" content="https://fun.moonx.farm/card.jpg" />
 
-      <meta property="fc:frame" content="vNext" />
-      <meta property="fc:frame:image" content="https://fun.moonx.farm/card.jpg" />
-      <meta property="fc:frame:button:1" content="Trade Now" />
-      <meta property="fc:frame:button:1:action" content="link" />
-      <meta property="fc:frame:button:1:target" content="https://fun.moonx.farm/" />
-
-
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js" crossorigin="anonymous"></script>
       <Head />
