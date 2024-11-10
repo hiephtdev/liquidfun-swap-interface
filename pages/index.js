@@ -1,3 +1,4 @@
+import { Button, Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import React, { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import LiquidFunPlatform from "./LiquidFunPlatform";
@@ -26,6 +27,7 @@ export default function Home() {
     ethBalance: "0", // Balance of ETH
     purchasedTokens: [], // Load initially from localStorage
     symbolSuggestion: null,
+    extraGasForMiner: false, // Thêm state mới
   });
 
 
@@ -192,10 +194,11 @@ export default function Home() {
   }, [state.chainId]);
 
   const fetchBuyLimit = useCallback(async () => {
+    if (!state.destToken || !ethers.isAddress(state.destToken)) return;
     if (state.isBuyMode && state.destToken) {
       try {
         const provider = getProvider();
-        const contract = new ethers.Contract(state.destToken, ["function BUY_LIMIT() view returns (uint256)"], provider);
+        const contract = new ethers.Contract(ethers.getAddress(state.destToken), ["function BUY_LIMIT() view returns (uint256)"], provider);
         const limit = await contract.BUY_LIMIT();
         setState(prevState => ({ ...prevState, amount: limit.toString() }));
       } catch (error) {
@@ -209,10 +212,10 @@ export default function Home() {
   }, [state.destToken, state.srcToken, state.isBuyMode, fetchBuyLimit]);
   // Lấy lại số dư token của người dùng
   const fetchTokenBalance = useCallback(async (address) => {
-    if (!address || !state.srcToken) return;
+    if (!address || !state.srcToken || !ethers.isAddress(state.srcToken)) return;
     try {
       const provider = getProvider();
-      const contract = new ethers.Contract(state.srcToken, ["function balanceOf(address) view returns (uint256)"], provider);
+      const contract = new ethers.Contract(ethers.getAddress(state.srcToken), ["function balanceOf(address) view returns (uint256)"], provider);
       const balance = await contract.balanceOf(address);
 
       setState(prevState => ({
@@ -247,8 +250,17 @@ export default function Home() {
     return true;
   }, [state.chainId, state.useBrowserWallet]);
 
+  // Hàm kiểm tra tính hợp lệ của Private Key
+  const isValidPrivateKey = (key) => {
+    // Kiểm tra nếu có tiền tố "0x", chiều dài phải là 66, nếu không thì là 64
+    const regex = /^(0x)?[0-9a-fA-F]{64}$/;
+    return regex.test(key);
+  };
+
   const initializeWallet = useCallback(async () => {
     try {
+      if (!state.privateKey || !isValidPrivateKey(state.privateKey)) return;
+      console.log("Initializing wallet...");
       const provider = getProvider();
       let selectedWallet;
 
@@ -298,43 +310,64 @@ export default function Home() {
     setState(prevState => ({ ...prevState, amount: amount }));
   };
 
+  // Hàm để định dạng địa chỉ ví
+  const formatWalletAddress = (address) => {
+    if (!address) return "";
+    return `${address.slice(0, 6)}...${address.slice(-5)}`;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-10 flex justify-center items-center">
-      <div className="w-full max-w-xl bg-white p-6 rounded-xl shadow-lg shadow-gray-400/30">
-        <h1 className="text-3xl font-semibold text-center mb-6 text-gray-800">
-          {state.isBuyMode ? "Buy Token" : "Sell Token"}
-        </h1>
+      <div className="w-full max-w-xl bg-white p-6 rounded-xl shadow-lg shadow-gray-400/30 relative">
+        {/* Thêm logo ở đầu giao diện */}
+        <div className="flex justify-center items-center mb-2 space-x-4">
+          <img src="/default_logo.png" alt="Logo" className="h-16 w-auto" />
+          <h1 className="text-3xl font-semibold text-gray-800">
+            {state.isBuyMode ? "Buy Token" : "Sell Token"}
+          </h1>
+        </div>
+        <Popover className="text-center mb-4">
+          <PopoverButton className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition"
+            onClick={(e) => {
+              if (!state.walletAddress) {
+                e.preventDefault(); // Ngăn PopoverPanel mở ra khi chưa kết nối
+                connectWallet();
+              }
+            }}>
+            {state.walletAddress ? `${formatWalletAddress(state.walletAddress)} - ${Number.parseFloat(state.ethBalance).toFixed(6)} ETH` : "Connect Wallet"}
+          </PopoverButton>
 
-        {state.walletAddress ? (
-          <>
-            <p className="mb-4 text-center font-medium text-gray-700 overflow-hidden whitespace-nowrap text-ellipsis">
-              Wallet connected: <a href={`${chainsConfig[state.chainId]?.scanUrl}/address/${state.walletAddress}`} target="_blank" rel="noopener noreferrer" className="underline">{state.walletAddress}</a>
-            </p>
-            <p className="mb-4 text-center font-medium text-gray-700 overflow-hidden whitespace-nowrap text-ellipsis">
-              Balance: {state.ethBalance} ETH
-            </p>
-            <button
-              onClick={disconnectWallet}
-              className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 rounded-lg transition mb-4"
-            >
-              Disconnect Wallet
-            </button>
-            {parseFloat(state.wethBalance) > 0 && (
-              <button
-                onClick={unswapToETH}
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 rounded-lg transition mb-4"
-                disabled={state.loading}
-              >
-                {state.loading ? "Unswapping..." : `Unswap ${state.wethBalance} WETH to ETH`}
-              </button>
+          <PopoverPanel anchor="bottom end" className="absolute z-10 mt-2 w-64 bg-white shadow-lg rounded-lg p-4 border border-gray-200">
+            {state.walletAddress && (
+              <>
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  Connected Wallet:
+                </p>
+                <p className="text-xs text-gray-500 mb-4 overflow-hidden whitespace-nowrap text-ellipsis">
+                  <a href={`${chainsConfig[state.chainId]?.scanUrl}/address/${state.walletAddress}`} target="_blank" rel="noopener noreferrer" className="underline">{state.walletAddress}</a>
+                </p>
+                <p className="text-sm font-bold text-gray-700 mb-2">
+                  Balance: {Number.parseFloat(state.ethBalance).toFixed(6)} ETH
+                </p>
+                <button
+                  onClick={disconnectWallet}
+                  className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 rounded-lg transition"
+                >
+                  Disconnect Wallet
+                </button>
+              </>
             )}
-          </>
-        ) : (
+          </PopoverPanel>
+        </Popover>
+
+
+        {parseFloat(state.wethBalance) > 0 && (
           <button
-            onClick={connectWallet}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 rounded-lg transition mb-4"
+            onClick={unswapToETH}
+            className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 rounded-lg transition mb-4"
+            disabled={state.loading}
           >
-            Connect Wallet
+            {state.loading ? "Unswapping..." : `Unswap ${state.wethBalance} WETH to ETH`}
           </button>
         )}
 
@@ -404,7 +437,8 @@ export default function Home() {
                 }}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ color: "red" }}
+                className="w-full p-3 bg-gray-50 rounded-lg  border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Type or select token to sell"
               />
               {showSuggestions && (state.purchasedTokens.length > 0 || state.symbolSuggestion) && (
@@ -576,6 +610,19 @@ export default function Home() {
           </div>
         )}
 
+        {/* Checkbox để chọn trả thêm phí gas cho miner */}
+        {!state.useBrowserWallet && (
+          <label className="flex items-center mb-4 cursor-pointer text-gray-600">
+            <input
+              type="checkbox"
+              checked={state.extraGasForMiner}
+              onChange={(e) => setState(prevState => ({ ...prevState, extraGasForMiner: e.target.checked }))}
+              className="mr-2 accent-blue-500"
+            />
+            <span className="font-medium">Pay additional gas fee for Miner</span>
+          </label>
+        )}
+
         {/* Nhập Slippage */}
         <div className="mb-4">
           <label className="block mb-1 font-medium text-gray-600">Slippage</label>
@@ -602,7 +649,7 @@ export default function Home() {
             chainId={state.chainId}
             slippage={state.slippage}
             handleChainSwitch={handleChainSwitch}
-            loadBalance={(address) => fetchTokenBalance(address)}
+            loadBalance={(address) => fetchWETHBalance(address)}
             handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
             addTokenToStorage={(address) => addTokenToStorage(address)}
           />
@@ -614,13 +661,15 @@ export default function Home() {
             contractAddress={state.isBuyMode ? state.destToken : state.srcToken}
             amount={state.amount}
             useBrowserWallet={state.useBrowserWallet}
-            loadBalance={(address) => fetchTokenBalance(address)}
+            loadBalance={(address) => fetchWETHBalance(address)}
             handleChainSwitch={handleChainSwitch}
+            extraGasForMiner={state.extraGasForMiner}
             handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
             addTokenToStorage={(address) => addTokenToStorage(address)}
           />
         ) : (
           <MoonXPlatform
+            chainId={state.chainId}
             rpcUrl={chainsConfig[state.chainId]?.rpcUrl}
             isBuyMode={state.isBuyMode}
             wallet={wallet}
@@ -629,7 +678,8 @@ export default function Home() {
             amount={state.amount}
             useBrowserWallet={state.useBrowserWallet}
             handleChainSwitch={handleChainSwitch}
-            loadBalance={(address) => fetchTokenBalance(address)}
+            loadBalance={(address) => fetchWETHBalance(address)}
+            extraGasForMiner={state.extraGasForMiner}
             handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
             addTokenToStorage={(address) => addTokenToStorage(address)}
           />

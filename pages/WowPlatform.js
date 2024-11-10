@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
 
-export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete, loadBalance, handleChainSwitch, addTokenToStorage }) {
+export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete, loadBalance, handleChainSwitch, addTokenToStorage, extraGasForMiner }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -87,7 +87,12 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
                 { value: ethers.parseEther(amount) }
             );
             const gasLimit = estimatedGas * BigInt(300) / BigInt(100);
-
+            let gasOptions = {};
+            if (extraGasForMiner) {
+                gasOptions = { maxPriorityFeePerGas: gasData.maxPriorityFeePerGas, maxFeePerGas: gasData.maxFeePerGas }
+            } else {
+                gasOptions = { gasPrice: gasData.gasPrice * 2n }
+            }
             return await contract.buy(
                 wallet.address,
                 wallet.address,
@@ -96,7 +101,7 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
                 0,
                 ethers.parseUnits("0", 18),
                 0n,
-                { value: ethers.parseEther(amount), gasLimit, gasPrice: gasData.gasPrice * 2n }
+                { value: ethers.parseEther(amount), gasLimit, ...gasOptions }
             );
         } else {
             const estimatedGas = await contract.sell.estimateGas(
@@ -109,7 +114,12 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
                 0n
             );
             const gasLimit = estimatedGas * BigInt(300) / BigInt(100);
-
+            let gasOptions = {};
+            if (extraGasForMiner) {
+                gasOptions = { maxPriorityFeePerGas: gasData.maxPriorityFeePerGas, maxFeePerGas: gasData.maxFeePerGas }
+            } else {
+                gasOptions = { gasPrice: gasData.gasPrice * 2n }
+            }
             return await contract.sell(
                 amount,
                 wallet.address,
@@ -118,7 +128,7 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
                 0,
                 ethers.parseUnits("0", 18),
                 0n,
-                { gasLimit, gasPrice: gasData.gasPrice * 2n }
+                { gasLimit, ...gasOptions }
             );
         }
     };
