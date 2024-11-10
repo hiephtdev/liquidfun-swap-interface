@@ -1,8 +1,11 @@
+import { ethers } from "ethers";
 import { Html, Head, Main, NextScript } from "next/document";
 
 export async function getServerSideProps(context) {
-  const { query } = context; // Lấy các query parameters từ URL
-  const referralLink = `https://fun.moonx.farm/?ref=${query.ref}`; // Xây dựng link từ query parameter
+  const { query } = context;
+  const refAddress = query.ref || ethers.ZeroAddress; // Lấy giá trị của `ref` từ URL
+  const referralLink = `https://fun.moonx.farm/?ref=${refAddress}`;
+
   return {
     props: {
       referralLink,
@@ -18,7 +21,7 @@ export default function Document({ referralLink }) {
       <meta property="og:title" content="MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ" />
       <meta property="og:description" content="Trade tokens quickly and securely on MoonX Farm. Connect your wallet to trade on LiquidFun and Wow.XYZ or add liquidity on DEX platforms similar to Uniswap. Supports MetaMask and popular tokens like WETH, USDC, and USDT." />
       <meta property="og:image" content="https://fun.moonx.farm/card.jpg" />
-      <meta property="og:url" content="https://fun.moonx.farm/" />
+      <meta property="og:url" content={referralLink} />
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content="MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ" />
@@ -32,7 +35,7 @@ export default function Document({ referralLink }) {
       <meta property="fc:frame:image" content="https://fun.moonx.farm/card.jpg" />
       <meta property="fc:frame:button:1" content="Trade Now" />
       <meta property="fc:frame:button:1:action" content="link" />
-      <meta property="fc:frame:button:1:target" content={`https://fun.moonx.farm/?ref=${referralLink}`} />
+      <meta property="fc:frame:button:1:target" content={referralLink} />
       <Head />
       <body className="antialiased font-sans">
         <Main />
