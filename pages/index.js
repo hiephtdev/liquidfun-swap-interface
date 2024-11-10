@@ -36,13 +36,25 @@ export default function Home() {
     ref: ethers.ZeroAddress
   });
 
+  // Kiểm tra và lấy refParam khi có
   useEffect(() => {
-    // Parse `ref` from URL
-    let refParam = router.query.ref;
-    if (refParam) {
-      setState(prevState => ({ ...prevState, ref: refParam }));
-    }
-  }, [router.query]);
+    const fetchRefParam = async () => {
+      if (state.walletAddress) {
+        // Gọi API để lấy refParam từ db
+        const response = await fetch(`/api/get-ref?walletAddress=${state.walletAddress}`);
+        const data = await response.json();
+        if (data.refParam) {
+          setState((prevState) => ({ ...prevState, ref: data.refParam }));
+        }
+      } else if (router.query.ref) {
+        // Nếu có `ref` trong URL thì lấy từ URL
+        setState((prevState) => ({ ...prevState, ref: router.query.ref }));
+      } else {
+        setState((prevState) => ({ ...prevState, ref: ethers.ZeroAddress })); // Set mặc định
+      }
+    };
+    fetchRefParam();
+  }, [router.query, state.walletAddress]);
 
   // Generate referral link
   const referralLink = `https://fun.moonx.farm/?ref=${state.walletAddress}`;
@@ -124,6 +136,15 @@ export default function Home() {
         setState(prevState => ({ ...prevState, walletAddress: address }));
         localStorage.setItem("mys:liquidfun-connectedWalletAddress", address);
         await fetchTokenBalance(address); // Lấy lại số dư sau khi kết nối
+
+        // Lưu `refParam` vào db khi có refParam
+        if (state.ref !== ethers.ZeroAddress && ethers.isAddress(state.ref)) {
+          await fetch("/api/save-ref", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ walletAddress, refParam: state.ref }),
+          });
+        }
       } catch (error) {
         console.error("Failed to connect wallet:", error);
         setState(prevState => ({ ...prevState, errorMessage: "Failed to connect wallet" }));
@@ -131,7 +152,7 @@ export default function Home() {
     } else {
       setState(prevState => ({ ...prevState, errorMessage: "Wallet address not found. Please install MetaMask." }));
     }
-  }, []);
+  }, [state.ref]);
 
   const fetchWETHBalance = useCallback(async (address) => {
     if (address && chainsConfig[state.chainId]?.tokens.WETH) {
