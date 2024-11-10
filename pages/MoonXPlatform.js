@@ -295,14 +295,6 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
                     continue; // Bỏ qua nếu không có pool tồn tại
                 }
 
-                console.log("Pool address:", poolAddress);
-                console.log("Fee tier:", fee);
-                console.log("Amount in:", amountIn);
-                console.log("Slippage percentage:", slippagePercentage);
-                console.log("Token in:", tokenIn);
-                console.log("Token out:", tokenOut);
-                console.log("Quote address:", chainsConfig[chainId].quote);
-
                 // Tạo tham số đầu vào cho hàm quoteExactInputSingle
                 const params = {
                     tokenIn,
