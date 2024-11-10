@@ -201,7 +201,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
                 ]);
 
 
-                let formattedValue = `${amountOut}`;
+                let formattedValue = `${amountOut.amountOutMin}`;
                 try {
                     const value = ethers.formatUnits(formattedValue, decimals);
                     formattedValue = new Intl.NumberFormat('en-US', {
@@ -323,18 +323,18 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
         const slippage = (bestQuote * BigInt(slippagePercentage)) / 100n;
         const amountOutMin = bestQuote - slippage;
 
-        return amountOutMin;
+        return { amountOutMin, poolAddress };
     }
 
     return (
         <div>
-            <div className={`mb-4 text-center text-white/80 italic font-semibold`}>
+            <div className={`mb-4 text-center italic font-semibold`}>
                 {`Amount to receive (with slippage): ${!loadingAmountOut ? displayAmount : `...`} `}
             </div>
             <button
                 onClick={handleTransaction}
                 disabled={loading}
-                className={`w-full p-2 rounded ${isBuyMode ? "bg-green-600 hover:bg-green-800" : "bg-red-600 hover:bg-red-800"} text-white/60 font-medium`}
+                className={`w-full p-2 rounded ${isBuyMode ? "bg-green-600 hover:bg-green-800" : "bg-red-600 hover:bg-red-800"} text-white font-medium`}
             >
                 {loading ? isBuyMode ? "Buy ..." : "Sell ..." : isBuyMode ? "Buy Token on MoonX" : "Sell Token on MoonX"}
             </button>

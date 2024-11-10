@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
+import { chainsConfig } from "@/constants/common";
 
 export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformWallet, srcToken, destToken, chainId, slippage, handleTransactionComplete, loadBalance, addTokenToStorage }) {
     const [errorMessage, setErrorMessage] = useState("");
@@ -139,16 +140,16 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
 
     return (
         <div>
-            <div className="mb-4 text-center text-white/60">
+            <div className="mb-4 text-center">
                 {isBuyMode
-                    ? `Amount to pay (with slippage): ${ethers.formatUnits(displayAmount, 18)} ${srcToken}`
-                    : `Amount to receive (with slippage): ${ethers.formatUnits(displayAmount, 18)} ${destToken}`}
+                    ? `Amount to pay (with slippage): ${ethers.formatUnits(displayAmount, 18)} ${srcToken === chainsConfig[chainId]?.tokens.WETH ? "ETH" : srcToken === chainsConfig[chainId]?.tokens.USDC ? "USDC" : "USDT"}`
+                    : `Amount to receive (with slippage): ${ethers.formatUnits(displayAmount, 18)} ${destToken === chainsConfig[chainId]?.tokens.WETH ? "ETH" : destToken === chainsConfig[chainId]?.tokens.USDC ? "USDC" : "USDT"} `}
             </div>
 
             {isBuyMode ? (
-                <button disabled={loading} onClick={handleBuy} className="w-full bg-green-600 hover:bg-green-800 text-white/60 p-2 rounded">{loading ? "Buy ..." : "Buy Token on LiquidFun"}</button>
+                <button disabled={loading} onClick={handleBuy} className="w-full bg-green-600 hover:bg-green-800 text-white p-2 rounded">{loading ? "Buy ..." : "Buy Token on LiquidFun"}</button>
             ) : (
-                <button disabled={loading} onClick={handleSell} className="w-full bg-red-600 hover:bg-red-800 text-white/0 p-2 rounded">{loading ? "Sell ..." : "Sell Token on LiquidFun"}</button>
+                <button disabled={loading} onClick={handleSell} className="w-full bg-red-600 hover:bg-red-800 text-white p-2 rounded">{loading ? "Sell ..." : "Sell Token on LiquidFun"}</button>
             )}
             {errorMessage && <p className="text-red-500">{errorMessage}</p>}
         </div>

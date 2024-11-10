@@ -146,7 +146,7 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
             <button
                 onClick={handleTransaction}
                 disabled={loading}
-                className={`w-full p-2 rounded ${isBuyMode ? "bg-green-600 hover:bg-green-800" : "bg-red-600 hover:bg-red-800"} text-white/80 font-medium`}
+                className={`w-full p-2 rounded ${isBuyMode ? "bg-green-600 hover:bg-green-800" : "bg-red-600 hover:bg-red-800"} text-white font-medium`}
             >
                 {loading ? isBuyMode ? "Buy..." : "Sell..." : isBuyMode ? "Buy Token on Wow" : "Sell Token on Wow"}
             </button>
