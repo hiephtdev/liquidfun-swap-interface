@@ -39,14 +39,17 @@ export default function Home() {
   // Kiểm tra và lấy refParam khi có
   useEffect(() => {
     const fetchRefParam = async () => {
+      debugger
       if (state.walletAddress) {
         // Gọi API để lấy refParam từ db
         const response = await fetch(`/api/get-ref?walletAddress=${state.walletAddress}`);
         const data = await response.json();
         if (data.refParam) {
           setState((prevState) => ({ ...prevState, ref: data.refParam }));
+          return;
         }
-      } else if (router.query.ref) {
+      }
+      if (router.query.ref) {
         // Nếu có `ref` trong URL thì lấy từ URL
         setState((prevState) => ({ ...prevState, ref: router.query.ref }));
       } else {
