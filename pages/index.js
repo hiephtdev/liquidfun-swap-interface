@@ -382,7 +382,7 @@ export default function Home() {
             await fetch("/api/save-ref", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ savedAddress, refParam: state.ref }),
+              body: JSON.stringify({ walletAddress: savedAddress, refParam: state.ref }),
             });
           }
           setState((prevState) => ({ ...prevState, walletAddress: savedAddress }));
