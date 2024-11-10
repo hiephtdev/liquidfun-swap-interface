@@ -400,6 +400,7 @@ export default function Home() {
   return (
     <>
       <Head>
+        <title>MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ</title>
         <meta property="fc:frame" content="vNext" />
         <meta property="fc:frame:image" content="https://fun.moonx.farm/card.jpg" />
         <meta property="fc:frame:button:1" content="Trade Now" />
