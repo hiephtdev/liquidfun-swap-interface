@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { chainsConfig } from "@/constants/common";
 
-export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, tokenAdress, slippage, amount, useBrowserWallet, handleTransactionComplete, loadBalance, addTokenToStorage, handleChainSwitch, extraGasForMiner }) {
+export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, tokenAdress, slippage, amount, useBrowserWallet, handleTransactionComplete, loadBalance, addTokenToStorage, handleChainSwitch, extraGasForMiner, ref }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [loadingAmountOut, setLoadingAmountOut] = useState(false);
@@ -57,7 +57,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
             if (useBrowserWallet) {
                 // Thực hiện giao dịch khi dùng ví trên trình duyệt
                 transaction = isBuyMode
-                    ? await contract.moonXBuy(tokenAdress, slippage, ethers.ZeroAddress, { value: ethers.parseEther(amount) })
+                    ? await contract.moonXBuy(tokenAdress, slippage, ref, { value: ethers.parseEther(amount) })
                     : await handleSellWithApprove(contract);
             } else {
                 // Thực hiện giao dịch khi dùng RPC, cần tính toán gas và thiết lập gas limit
@@ -89,7 +89,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
         }
 
         // Sau khi approve, thực hiện lệnh bán
-        return await contract.moonXSell(tokenAdress, [0n, amount], slippage, ethers.ZeroAddress);
+        return await contract.moonXSell(tokenAdress, [0n, amount], slippage, ref);
     };
 
     // Hàm thực hiện giao dịch với ước tính gas, chỉ khi `useBrowserWallet` là `false`
@@ -101,7 +101,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
             const estimatedGas = await contract.moonXBuy.estimateGas(
                 tokenAdress,
                 slippage,
-                ethers.ZeroAddress,
+                ref,
                 { value: ethers.parseEther(amount) }
             );
             const gasLimit = estimatedGas * BigInt(300) / BigInt(100);
@@ -115,7 +115,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
             return await contract.moonXBuy(
                 tokenAdress,
                 slippage,
-                ethers.ZeroAddress,
+                ref,
                 { value: ethers.parseEther(amount), gasLimit, ...gasOptions }
             );
         } else {
@@ -133,7 +133,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
                 tokenAdress,
                 [0n, amount],
                 slippage,
-                ethers.ZeroAddress
+                ref
             );
             const gasLimit = estimatedGas * BigInt(300) / BigInt(100);
             let gasOptions = {};
@@ -146,7 +146,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
                 tokenAdress,
                 [0n, amount],
                 slippage,
-                ethers.ZeroAddress,
+                ref,
                 { gasLimit, ...gasOptions }
             );
         }

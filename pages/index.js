@@ -6,8 +6,12 @@ import WowPlatform from "./WowPlatform";
 import MoonXPlatform from "./MoonXPlatform";
 import { chainsConfig } from "@/constants/common";
 import Head from 'next/head';
+import { useRouter } from 'next/router';
+import FarcasterShareIcon from "@/components/icons/FarcasterShareIcon";
 
 export default function Home() {
+  const router = useRouter();
+
   const [state, setState] = useState({
     chainId: "8453",
     platform: "wow",
@@ -29,8 +33,35 @@ export default function Home() {
     purchasedTokens: [], // Load initially from localStorage
     symbolSuggestion: null,
     extraGasForMiner: false, // Thêm state mới
+    ref: ethers.ZeroAddress
   });
 
+  useEffect(() => {
+    // Parse `ref` from URL
+    let refParam = router.query.ref;
+    if (refParam) {
+      setState(prevState => ({ ...prevState, ref: refParam }));
+    }
+  }, [router.query]);
+
+  // Generate referral link
+  const referralLink = `https://fun.moonx.farm/?ref=${state.walletAddress}`;
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(referralLink).then(() => {
+      alert('Referral link copied to clipboard!');
+    });
+  };
+
+  const handleShareOnX = () => {
+    const shareUrl = `https://x.com/intent/post?text=%F0%9F%9A%80+Trade+Fast+%26+Secure+on+MoonXFarm%21+%F0%9F%90%82%F0%9F%92%B0%0A%0AConnect+your+wallet+to+trade+tokens+on+%40liquiddotfun%2C+%40wow+%26+Uniswap.%0A%0AGet+real-time+deals+%26+updates%21%0A%0A%F0%9F%91%89+Sign+up%3A+${encodeURIComponent(referralLink)}%0A%0A%23Crypto+%23TokenTrading+%23DeFi+%23MoonXFarm`;
+    window.open(shareUrl, '_blank');
+  };
+
+  const handleShareOnWarpcast = () => {
+    const shareUrl = `https://warpcast.com/~/compose?text=%F0%9F%9A%80+Trade+Fast+%26+Secure+on+MoonXFarm%21+%F0%9F%90%82%F0%9F%92%B0%0A%0AConnect+your+wallet+to+trade+tokens+on+%40liquiddotfun%2C+%40wow+%26+Uniswap.%0A%0AGet+real-time+deals+%26+updates%21%0A%0A%F0%9F%91%89+Sign+up%3A+${encodeURIComponent(referralLink)}%0A%0A%23Crypto+%23TokenTrading+%23DeFi+%23MoonXFarm`;
+    window.open(shareUrl, '_blank');
+  };
 
   const [showSuggestions, setShowSuggestions] = useState(false);
   // Load purchased tokens from localStorage on the client side
@@ -336,23 +367,7 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <title>MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ</title>
-
-        <meta property="og:title" content="MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ" />
-        <meta property="og:description" content="Trade tokens quickly and securely on MoonX Farm. Connect your wallet to trade on LiquidFun and Wow.XYZ or add liquidity on DEX platforms similar to Uniswap. Supports MetaMask and popular tokens like WETH, USDC, and USDT." />
-        <meta property="og:image" content="https://fun.moonx.farm/card.jpg" />
-        <meta property="og:url" content="https://fun.moonx.farm/" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ" />
-        <meta name="twitter:description" content="Connect your MetaMask wallet and trade tokens like WETH, USDC, USDT on LiquidFun and Wow.XYZ or add liquidity on DEX platforms similar to Uniswap." />
-        <meta name="twitter:image" content="https://fun.moonx.farm/card.jpg" />
-
-
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      </Head>
-      <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-10 flex justify-center items-center font-sans">
+      <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-10 flex justify-center items-center">
         <div className="w-full max-w-xl bg-white p-6 rounded-xl shadow-lg shadow-gray-400/30 relative">
           {/* Thêm logo ở đầu giao diện */}
           <div className="flex justify-center items-center mb-2 space-x-4">
@@ -361,8 +376,8 @@ export default function Home() {
               {state.isBuyMode ? "Buy Token" : "Sell Token"}
             </h1>
           </div>
-          <Popover className="text-center mb-4 font-sans">
-            <PopoverButton className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition"
+          <Popover className="text-center mb-4">
+            <PopoverButton className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition focus:border-none focus:outline-none"
               onClick={(e) => {
                 if (!state.walletAddress) {
                   e.preventDefault(); // Ngăn PopoverPanel mở ra khi chưa kết nối
@@ -372,7 +387,7 @@ export default function Home() {
               {state.walletAddress ? `${formatWalletAddress(state.walletAddress)} - ${Number.parseFloat(state.ethBalance).toFixed(6)} ETH` : "Connect Wallet"}
             </PopoverButton>
 
-            <PopoverPanel anchor="bottom end" className="absolute z-10 mt-2 w-64 bg-white shadow-lg rounded-lg p-4 border border-gray-200 font-sans">
+            <PopoverPanel anchor="bottom end" className="absolute z-10 mt-2 w-64 bg-white shadow-lg rounded-lg p-4 border border-gray-200">
               {state.walletAddress && (
                 <>
                   <p className="text-sm font-medium text-gray-700 mb-2">
@@ -704,6 +719,7 @@ export default function Home() {
               extraGasForMiner={state.extraGasForMiner}
               handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
               addTokenToStorage={(address) => addTokenToStorage(address)}
+              ref={state.ref}
             />
           )}
 
@@ -719,6 +735,54 @@ export default function Home() {
             <p className="mt-4 text-center font-bold text-red-500">
               Error: {state.errorMessage}
             </p>
+          )}
+
+          {/* Display referral link with copy and share buttons */}
+          {state.walletAddress && (
+            <div class="flex justify-between items-center text-gray-800 mt-5">
+              <div class="flex items-center space-x-2">
+                <button onClick={() => { window.open("https://x.com/MoonXFarm", '_blank'); }}>
+                  <i class="fab fa-twitter text-blue-500"></i>
+                </button>
+                <button onClick={() => { window.open("https://discord.gg/x9f4vkvu", '_blank'); }}>
+                  <i class="fab fa-discord text-indigo-600"></i>
+                </button>
+                <button onClick={() => { window.open("https://t.me/MoonXFarm", '_blank'); }}>
+                  <i class="fab fa-telegram text-blue-400"></i>
+                </button>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span>Share your link ref</span>
+                <button onClick={handleCopyLink}>
+                  <i class="fas fa-copy cursor-pointer"></i>
+                </button>
+                <button onClick={handleShareOnX}>
+                  <i class="fab fa-twitter text-blue-500"></i>
+                </button>
+                <button onClick={handleShareOnWarpcast}>
+                  <FarcasterShareIcon class="text-[#8660cd]" />
+                </button>
+              </div>
+            </div>
+
+            // <div className="mt-4 text-center">
+            //   <p className="text-gray-600 text-sm">Your referral link:</p>
+            //   <div className="flex items-center justify-center space-x-2">
+            //     <input
+            //       type="text"
+            //       readOnly
+            //       value={referralLink}
+            //       className="border border-gray-300 rounded px-2 py-1 text-gray-700 text-sm"
+            //       style={{ width: "80%" }}
+            //     />
+            //     <button onClick={handleCopyLink} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded">
+            //       Copy
+            //     </button>
+            //     <button onClick={handleShareOnX} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded">
+            //       Share on X
+            //     </button>
+            //   </div>
+            // </div>
           )}
         </div>
       </div>
