@@ -437,8 +437,7 @@ export default function Home() {
                 }}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                style={{ color: "red" }}
-                className="w-full p-3 bg-gray-50 rounded-lg  border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 bg-gray-50 rounded-lg text-black  border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Type or select token to sell"
               />
               {showSuggestions && (state.purchasedTokens.length > 0 || state.symbolSuggestion) && (
@@ -522,7 +521,7 @@ export default function Home() {
                 }}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 bg-gray-50 rounded-lg text-black border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Type or select token to sell"
               />
               {showSuggestions && (state.purchasedTokens.length > 0 || state.symbolSuggestion) && (
