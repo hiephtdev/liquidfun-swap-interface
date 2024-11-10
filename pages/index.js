@@ -5,19 +5,8 @@ import LiquidFunPlatform from "./LiquidFunPlatform";
 import WowPlatform from "./WowPlatform";
 import MoonXPlatform from "./MoonXPlatform";
 import { chainsConfig } from "@/constants/common";
-import Head from 'next/head';
 import { useRouter } from 'next/router';
 import FarcasterShareIcon from "@/components/icons/FarcasterShareIcon";
-
-export async function getServerSideProps(context) {
-  const { query } = context; // Lấy các query parameters từ URL
-  const referralLink = `https://fun.moonx.farm/?ref=${query.ref}`; // Xây dựng link từ query parameter
-  return {
-    props: {
-      referralLink,
-    },
-  };
-}
 
 export default function Home() {
   const router = useRouter();
@@ -49,7 +38,6 @@ export default function Home() {
   // Kiểm tra và lấy refParam khi có
   useEffect(() => {
     const fetchRefParam = async () => {
-      debugger
       if (state.walletAddress) {
         // Gọi API để lấy refParam từ db
         const response = await fetch(`/api/get-ref?walletAddress=${state.walletAddress}`);
@@ -409,14 +397,6 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <title>MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ</title>
-        <meta property="fc:frame" content="vNext" />
-        <meta property="fc:frame:image" content="https://fun.moonx.farm/card.jpg" />
-        <meta property="fc:frame:button:1" content="Trade Now" />
-        <meta property="fc:frame:button:1:action" content="link" />
-        <meta property="fc:frame:button:1:target" content={`https://fun.moonx.farm/?ref=${referralLink}`} />
-      </Head>
       <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-10 flex justify-center items-center">
         <div className="w-full max-w-xl bg-white p-6 rounded-xl shadow-lg shadow-gray-400/30 relative">
           {/* Thêm logo ở đầu giao diện */}

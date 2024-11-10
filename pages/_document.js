@@ -1,5 +1,15 @@
 import { Html, Head, Main, NextScript } from "next/document";
 
+export async function getServerSideProps(context) {
+  const { query } = context; // Lấy các query parameters từ URL
+  const referralLink = `https://fun.moonx.farm/?ref=${query.ref}`; // Xây dựng link từ query parameter
+  return {
+    props: {
+      referralLink,
+    },
+  };
+}
+
 export default function Document() {
   return (
     <Html lang="en">
@@ -17,6 +27,12 @@ export default function Document() {
 
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js" crossorigin="anonymous"></script>
+
+      <meta property="fc:frame" content="vNext" />
+      <meta property="fc:frame:image" content="https://fun.moonx.farm/card.jpg" />
+      <meta property="fc:frame:button:1" content="Trade Now" />
+      <meta property="fc:frame:button:1:action" content="link" />
+      <meta property="fc:frame:button:1:target" content={`https://fun.moonx.farm/?ref=${referralLink}`} />
       <Head />
       <body className="antialiased font-sans">
         <Main />
