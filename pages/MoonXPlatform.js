@@ -285,12 +285,12 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
         }
 
         let bestQuote = 0n;
-
+        let poolAddress = ethers.ZeroAddress;
         // Duyệt qua từng `feeTiers` để tìm `amountOut` tốt nhất
         for (const fee of feeTiers) {
             try {
                 // Kiểm tra sự tồn tại của pool
-                const poolAddress = await factory.getPool(tokenIn, tokenOut, fee);
+                poolAddress = await factory.getPool(tokenIn, tokenOut, fee);
                 if (poolAddress === ethers.ZeroAddress) {
                     continue; // Bỏ qua nếu không có pool tồn tại
                 }
@@ -328,13 +328,13 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
 
     return (
         <div>
-            <div className={`mb-4 text-center text-black italic font-semibold`}>
+            <div className={`mb-4 text-center text-white/80 italic font-semibold`}>
                 {`Amount to receive (with slippage): ${!loadingAmountOut ? displayAmount : `...`} `}
             </div>
             <button
                 onClick={handleTransaction}
                 disabled={loading}
-                className={`w-full p-2 rounded ${isBuyMode ? "bg-green-500" : "bg-red-500"} text-white font-medium`}
+                className={`w-full p-2 rounded ${isBuyMode ? "bg-green-600 hover:bg-green-800" : "bg-red-600 hover:bg-red-800"} text-white/60 font-medium`}
             >
                 {loading ? isBuyMode ? "Buy ..." : "Sell ..." : isBuyMode ? "Buy Token on MoonX" : "Sell Token on MoonX"}
             </button>

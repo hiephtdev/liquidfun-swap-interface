@@ -5,6 +5,7 @@ import LiquidFunPlatform from "./LiquidFunPlatform";
 import WowPlatform from "./WowPlatform";
 import MoonXPlatform from "./MoonXPlatform";
 import { chainsConfig } from "@/constants/common";
+import Head from 'next/head';
 
 export default function Home() {
   const [state, setState] = useState({
@@ -334,387 +335,393 @@ export default function Home() {
   }, [state.useBrowserWallet, connectWallet, fetchTokenBalance, fetchWETHBalance]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-10 flex justify-center items-center">
-      <div className="w-full max-w-xl bg-white p-6 rounded-xl shadow-lg shadow-gray-400/30 relative">
-        {/* Thêm logo ở đầu giao diện */}
-        <div className="flex justify-center items-center mb-2 space-x-4">
-          <img src="/default_logo.png" alt="Logo" className="h-16 w-auto" />
-          <h1 className="text-3xl font-semibold text-gray-800">
-            {state.isBuyMode ? "Buy Token" : "Sell Token"}
-          </h1>
-        </div>
-        <Popover className="text-center mb-4">
-          <PopoverButton className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition"
-            onClick={(e) => {
-              if (!state.walletAddress) {
-                e.preventDefault(); // Ngăn PopoverPanel mở ra khi chưa kết nối
-                connectWallet();
-              }
-            }}>
-            {state.walletAddress ? `${formatWalletAddress(state.walletAddress)} - ${Number.parseFloat(state.ethBalance).toFixed(6)} ETH` : "Connect Wallet"}
-          </PopoverButton>
+    <>
+      <Head>
+        <title>MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ</title>
 
-          <PopoverPanel anchor="bottom end" className="absolute z-10 mt-2 w-64 bg-white shadow-lg rounded-lg p-4 border border-gray-200">
-            {state.walletAddress && (
+        <meta property="og:title" content="MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ" />
+        <meta property="og:description" content="Trade tokens quickly and securely on MoonX Farm. Connect your wallet to trade on LiquidFun and Wow.XYZ or add liquidity on DEX platforms similar to Uniswap. Supports MetaMask and popular tokens like WETH, USDC, and USDT." />
+        <meta property="og:image" content="https://fun.moonx.farm/card.jpg" />
+        <meta property="og:url" content="https://fun.moonx.farm/" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ" />
+        <meta name="twitter:description" content="Connect your MetaMask wallet and trade tokens like WETH, USDC, USDT on LiquidFun and Wow.XYZ or add liquidity on DEX platforms similar to Uniswap." />
+        <meta name="twitter:image" content="https://fun.moonx.farm/card.jpg" />
+
+
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      </Head>
+      <div style={{ background: "linear-gradient(135deg, #0b0f33 0%, #0a0d25 100%);" }} className="min-h-screen p-10 flex justify-center items-center font-sans">
+        <div className="w-full max-w-xl border-[#1f265c] shadow-lg border-4 p-6 rounded-xl relative text-white/60">
+          {/* Thêm logo ở đầu giao diện */}
+          <div className="flex justify-center items-center mb-2 space-x-4">
+            <img src="/default_logo.png" alt="Logo" className="h-16 w-auto" />
+            <h1 className="text-3xl font-semibold text-white/90">
+              {state.isBuyMode ? "Buy Token" : "Sell Token"}
+            </h1>
+          </div>
+          <Popover className="text-center mb-4">
+            <PopoverButton className="w-full bg-blue-500 hover:bg-blue-600 text-white/80 font-medium py-2 px-4 rounded-lg transition"
+              onClick={(e) => {
+                if (!state.walletAddress) {
+                  e.preventDefault(); // Ngăn PopoverPanel mở ra khi chưa kết nối
+                  connectWallet();
+                }
+              }}>
+              {state.walletAddress ? `${formatWalletAddress(state.walletAddress)} - ${Number.parseFloat(state.ethBalance).toFixed(6)} ETH` : "Connect Wallet"}
+            </PopoverButton>
+
+            <PopoverPanel anchor="bottom end" className="absolute z-10 mt-2 w-64 bg-[#0d1143] text-white/60 shadow-lg rounded-lg p-4 border border-gray-200 font-sans">
+              {state.walletAddress && (
+                <>
+                  <p className="text-sm font-medium mb-2">
+                    Connected Wallet:
+                  </p>
+                  <p className="text-xs mb-4 overflow-hidden whitespace-nowrap text-ellipsis">
+                    <a href={`${chainsConfig[state.chainId]?.scanUrl}/address/${state.walletAddress}`} target="_blank" rel="noopener noreferrer" className="underline">{state.walletAddress}</a>
+                  </p>
+                  <p className="text-sm font-bold mb-2">
+                    Balance: {Number.parseFloat(state.ethBalance).toFixed(6)} ETH
+                  </p>
+                  <button
+                    onClick={disconnectWallet}
+                    className="w-full bg-red-600 hover:bg-red-800 font-medium py-2 rounded-lg transition text-white/90"
+                  >
+                    Disconnect Wallet
+                  </button>
+                </>
+              )}
+            </PopoverPanel>
+          </Popover>
+
+
+          {parseFloat(state.wethBalance) > 0 && (
+            <button
+              onClick={unswapToETH}
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white/60 font-medium py-2 rounded-lg transition mb-4"
+              disabled={state.loading}
+            >
+              {state.loading ? "Unswapping..." : `Unswap ${state.wethBalance} WETH to ETH`}
+            </button>
+          )}
+
+          {/* Chọn nền tảng */}
+          <div className="flex justify-center mb-6">
+            <label className="mr-4 cursor-pointer">
+              <input
+                type="radio"
+                name="platform"
+                value="liquidfun"
+                checked={state.platform === "liquidfun"}
+                onChange={() => togglePlatform("liquidfun")}
+                className="mr-2"
+              />
+              LiquidFun
+            </label>
+            <label className="mr-4 cursor-pointer">
+              <input
+                type="radio"
+                name="platform"
+                value="wow"
+                checked={state.platform === "wow"}
+                onChange={() => togglePlatform("wow")}
+                className="mr-2"
+              />
+              Wow.XYZ
+            </label>
+            <label className="cursor-pointer">
+              <input
+                type="radio"
+                name="platform"
+                value="moonx"
+                checked={state.platform === "moonx"}
+                onChange={() => togglePlatform("moonx")}
+                className="mr-2"
+              />
+              MoonX Farm
+            </label>
+          </div>
+
+          {/* Chọn token gốc với combo box */}
+          <div className="mb-4">
+            <label className="block mb-1 font-medium text-white/60">From Token</label>
+            {state.isBuyMode ? (
+              <select
+                value={state.srcToken}
+                onChange={(e) => setState(prevState => ({ ...prevState, srcToken: e.target.value }))}
+                className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {Object.entries(chainsConfig[state.chainId].tokens).map(([tokenName, tokenAddress]) => (
+                  <option key={tokenName} value={tokenAddress} className="text-black">{tokenName}</option>
+                ))}
+              </select>
+            ) : (
               <>
-                <p className="text-sm font-medium text-gray-700 mb-2">
-                  Connected Wallet:
-                </p>
-                <p className="text-xs text-gray-500 mb-4 overflow-hidden whitespace-nowrap text-ellipsis">
-                  <a href={`${chainsConfig[state.chainId]?.scanUrl}/address/${state.walletAddress}`} target="_blank" rel="noopener noreferrer" className="underline">{state.walletAddress}</a>
-                </p>
-                <p className="text-sm font-bold text-gray-700 mb-2">
-                  Balance: {Number.parseFloat(state.ethBalance).toFixed(6)} ETH
-                </p>
-                <button
-                  onClick={disconnectWallet}
-                  className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 rounded-lg transition"
-                >
-                  Disconnect Wallet
-                </button>
+                <input
+                  type="text"
+                  value={state.srcToken}
+                  onChange={(e) => {
+                    const tokenAddress = e.target.value;
+                    setState(prevState => ({ ...prevState, srcToken: tokenAddress }));
+                    if (tokenAddress.length === 42) {
+                      fetchTokenSymbol(tokenAddress);
+                    } else {
+                      setState(prevState => ({ ...prevState, symbolSuggestion: null }));
+                    }
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  className="w-full p-3 bg-gray-50 rounded-lg text-black  border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Type or select token to sell"
+                />
+                {showSuggestions && (state.purchasedTokens.length > 0 || state.symbolSuggestion) && (
+                  <ul className="absolute w-full max-w-lg bg-white border border-gray-300 rounded-lg mt-1 shadow-lg z-10 max-h-40 overflow-y-auto">
+                    {state.symbolSuggestion ? (
+                      state.symbolSuggestion !== "Not found" ? (
+                        <li
+                          onMouseDown={() => {
+                            setState(prevState => ({ ...prevState, srcToken: state.srcToken, symbolSuggestion: null }));
+                          }}
+                          className="p-2 cursor-pointer hover:bg-gray-100 text-black"
+                        >
+                          {state.symbolSuggestion ? `${state.symbolSuggestion} (${state.srcToken})` : "Not found"}
+                        </li>
+                      ) : (
+                        <li className="p-2 text-red-500">Not found</li>
+                      )
+                    ) : (
+                      state.purchasedTokens.map((token, index) => (
+                        <li
+                          key={index}
+                          onMouseDown={() => setState(prevState => ({ ...prevState, srcToken: token.address }))}
+                          className="p-2 cursor-pointer hover:bg-gray-100"
+                        >
+                          {token.symbol ? `${token.symbol} (${token.address})` : "Not found"}
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
               </>
             )}
-          </PopoverPanel>
-        </Popover>
-
-
-        {parseFloat(state.wethBalance) > 0 && (
-          <button
-            onClick={unswapToETH}
-            className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 rounded-lg transition mb-4"
-            disabled={state.loading}
-          >
-            {state.loading ? "Unswapping..." : `Unswap ${state.wethBalance} WETH to ETH`}
-          </button>
-        )}
-
-        {/* Chọn nền tảng */}
-        <div className="flex justify-center mb-6">
-          <label className="mr-4 cursor-pointer">
-            <input
-              type="radio"
-              name="platform"
-              value="liquidfun"
-              checked={state.platform === "liquidfun"}
-              onChange={() => togglePlatform("liquidfun")}
-              className="mr-2"
-            />
-            LiquidFun
-          </label>
-          <label className="mr-4 cursor-pointer">
-            <input
-              type="radio"
-              name="platform"
-              value="wow"
-              checked={state.platform === "wow"}
-              onChange={() => togglePlatform("wow")}
-              className="mr-2"
-            />
-            Wow.XYZ
-          </label>
-          <label className="cursor-pointer">
-            <input
-              type="radio"
-              name="platform"
-              value="moonx"
-              checked={state.platform === "moonx"}
-              onChange={() => togglePlatform("moonx")}
-              className="mr-2"
-            />
-            MoonX Farm
-          </label>
-        </div>
-
-        {/* Chọn token gốc với combo box */}
-        <div className="mb-4">
-          <label className="block mb-1 font-medium text-gray-600">From Token</label>
-          {state.isBuyMode ? (
-            <select
-              value={state.srcToken}
-              onChange={(e) => setState(prevState => ({ ...prevState, srcToken: e.target.value }))}
-              className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {Object.entries(chainsConfig[state.chainId].tokens).map(([tokenName, tokenAddress]) => (
-                <option key={tokenName} value={tokenAddress} className="text-black">{tokenName}</option>
-              ))}
-            </select>
-          ) : (
-            <>
-              <input
-                type="text"
-                value={state.srcToken}
-                onChange={(e) => {
-                  const tokenAddress = e.target.value;
-                  setState(prevState => ({ ...prevState, srcToken: tokenAddress }));
-                  if (tokenAddress.length === 42) {
-                    fetchTokenSymbol(tokenAddress);
-                  } else {
-                    setState(prevState => ({ ...prevState, symbolSuggestion: null }));
-                  }
-                }}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className="w-full p-3 bg-gray-50 rounded-lg text-black  border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Type or select token to sell"
-              />
-              {showSuggestions && (state.purchasedTokens.length > 0 || state.symbolSuggestion) && (
-                <ul className="absolute w-full max-w-lg bg-white border border-gray-300 rounded-lg mt-1 shadow-lg z-10 max-h-40 overflow-y-auto">
-                  {state.symbolSuggestion ? (
-                    state.symbolSuggestion !== "Not found" ? (
-                      <li
-                        onMouseDown={() => {
-                          setState(prevState => ({ ...prevState, srcToken: state.srcToken, symbolSuggestion: null }));
-                        }}
-                        className="p-2 cursor-pointer hover:bg-gray-100 text-black"
-                      >
-                        {state.symbolSuggestion ? `${state.symbolSuggestion} (${state.srcToken})` : "Not found"}
-                      </li>
-                    ) : (
-                      <li className="p-2 text-red-500">Not found</li>
-                    )
-                  ) : (
-                    state.purchasedTokens.map((token, index) => (
-                      <li
-                        key={index}
-                        onMouseDown={() => setState(prevState => ({ ...prevState, srcToken: token.address }))}
-                        className="p-2 cursor-pointer hover:bg-gray-100"
-                      >
-                        {token.symbol ? `${token.symbol} (${token.address})` : "Not found"}
-                      </li>
-                    ))
-                  )}
-                </ul>
-              )}
-            </>
-            // <input
-            //   type="text"
-            //   value={state.srcToken}
-            //   onChange={(e) => setState(prevState => ({ ...prevState, srcToken: e.target.value }))}
-            //   className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            // />
-          )}
-        </div>
-
-        {/* Icon chuyển đổi chế độ */}
-        <div className="flex items-center justify-center mb-6">
-          <button
-            onClick={toggleMode}
-            className="bg-gray-200 hover:bg-gray-300 p-3 rounded-full transition text-gray-600"
-            title="Swap to sell/buy mode"
-          >
-            <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" style={{ color: "rgb(34, 34, 34)", width: "24px", height: "24px", transform: "rotate(0deg)" }}>
-              <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M19 12L12 19L5 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Chọn token đích với combo box */}
-        <div className="mb-4">
-          <label className="block mb-1 font-medium text-gray-600">To Token</label>
-          {!state.isBuyMode ? (
-            <select
-              value={state.destToken}
-              onChange={(e) => setState(prevState => ({ ...prevState, destToken: e.target.value }))}
-              className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {Object.entries(chainsConfig[state.chainId].tokens).map(([tokenName, tokenAddress]) => (
-                <option key={tokenName} value={tokenAddress} className="text-black">{tokenName}</option>
-              ))}
-            </select>
-          ) : (
-            <>
-              <input
-                type="text"
-                value={state.destToken}
-                onChange={(e) => {
-                  const tokenAddress = e.target.value;
-                  setState(prevState => ({ ...prevState, destToken: tokenAddress }));
-                  if (tokenAddress.length === 42) {
-                    fetchTokenSymbol(tokenAddress);
-                  } else {
-                    setState(prevState => ({ ...prevState, symbolSuggestion: null }));
-                  }
-                }}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className="w-full p-3 bg-gray-50 rounded-lg text-black border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Type or select token to sell"
-              />
-              {showSuggestions && (state.purchasedTokens.length > 0 || state.symbolSuggestion) && (
-                <ul className="absolute w-full max-w-lg bg-white border border-gray-300 rounded-lg mt-1 shadow-lg z-10 max-h-40 overflow-y-auto">
-                  {state.symbolSuggestion ? (
-                    state.symbolSuggestion !== "Not found" ? (
-                      <li
-                        onMouseDown={() => {
-                          setState(prevState => ({ ...prevState, destToken: state.destToken, symbolSuggestion: null }));
-                        }}
-                        className="p-2 cursor-pointer hover:bg-gray-100 text-black"
-                      >
-                        {state.symbolSuggestion ? `${state.symbolSuggestion} (${state.destToken})` : "Not found"}
-                      </li>
-                    ) : (
-                      <li className="p-2 text-red-500">Not found</li>
-                    )
-                  ) : (
-                    state.purchasedTokens.map((token, index) => (
-                      <li
-                        key={index}
-                        onMouseDown={() => setState(prevState => ({ ...prevState, destToken: token.address }))}
-                        className="p-2 cursor-pointer hover:bg-gray-100"
-                      >
-                        {token.symbol ? `${token.symbol} (${token.address})` : "Not found"}
-                      </li>
-                    ))
-                  )}
-                </ul>
-              )}
-            </>
-            // <input
-            //   type="text"
-            //   value={state.destToken}
-            //   onChange={(e) => setState(prevState => ({ ...prevState, destToken: e.target.value }))}
-            //   className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            // />
-          )}
-        </div>
-
-        {/* Nhập Amount */}
-        <div className="mb-4">
-          <label className="block mb-1 font-medium text-gray-600">Amount</label>
-          <input
-            type="text"
-            value={state.amount}
-            onChange={(e) => setState(prevState => ({ ...prevState, amount: e.target.value }))}
-            className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        {!state.isBuyMode && (
-          <div className="flex justify-between mb-4 text-gray-600">
-            {["24%", "42%", "69%", "100%"].map((percentage, idx) => (
-              <button
-                key={idx}
-                onClick={() => handlePercentageClick(parseInt(percentage))}
-                className="bg-gray-100 px-4 py-2 rounded-lg transition hover:bg-gray-200"
-              >
-                {percentage}
-              </button>
-            ))}
           </div>
-        )}
 
-        <label className="flex items-center mb-4 cursor-pointer text-gray-600">
-          <input
-            type="checkbox"
-            checked={state.useBrowserWallet}
-            onChange={(e) => setState(prevState => ({ ...prevState, useBrowserWallet: e.target.checked }))}
-            className="mr-2 accent-blue-500"
-          />
-          <span className="font-medium">Use Browser Wallet (MetaMask)</span>
-        </label>
+          {/* Icon chuyển đổi chế độ */}
+          <div className="flex items-center justify-center mb-6">
+            <button
+              onClick={toggleMode}
+              className="bg-gray-200 hover:bg-gray-300 p-3 rounded-full transition "
+              title="Swap to sell/buy mode"
+            >
+              <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" style={{ color: "rgb(34, 34, 34)", width: "24px", height: "24px", transform: "rotate(0deg)" }}>
+                <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M19 12L12 19L5 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
 
-        {!state.useBrowserWallet && (
+          {/* Chọn token đích với combo box */}
           <div className="mb-4">
-            <label className="block mb-1 font-medium text-gray-600">Private key</label>
+            <label className="block mb-1 font-medium text-white/60">To Token</label>
+            {!state.isBuyMode ? (
+              <select
+                value={state.destToken}
+                onChange={(e) => setState(prevState => ({ ...prevState, destToken: e.target.value }))}
+                className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {Object.entries(chainsConfig[state.chainId].tokens).map(([tokenName, tokenAddress]) => (
+                  <option key={tokenName} value={tokenAddress} className="text-black">{tokenName}</option>
+                ))}
+              </select>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  value={state.destToken}
+                  onChange={(e) => {
+                    const tokenAddress = e.target.value;
+                    setState(prevState => ({ ...prevState, destToken: tokenAddress }));
+                    if (tokenAddress.length === 42) {
+                      fetchTokenSymbol(tokenAddress);
+                    } else {
+                      setState(prevState => ({ ...prevState, symbolSuggestion: null }));
+                    }
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  className="w-full p-3 bg-gray-50 rounded-lg text-black border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Type or select token to sell"
+                />
+                {showSuggestions && (state.purchasedTokens.length > 0 || state.symbolSuggestion) && (
+                  <ul className="absolute w-full max-w-lg bg-white border border-gray-300 rounded-lg mt-1 shadow-lg z-10 max-h-40 overflow-y-auto">
+                    {state.symbolSuggestion ? (
+                      state.symbolSuggestion !== "Not found" ? (
+                        <li
+                          onMouseDown={() => {
+                            setState(prevState => ({ ...prevState, destToken: state.destToken, symbolSuggestion: null }));
+                          }}
+                          className="p-2 cursor-pointer hover:bg-gray-100 text-black"
+                        >
+                          {state.symbolSuggestion ? `${state.symbolSuggestion} (${state.destToken})` : "Not found"}
+                        </li>
+                      ) : (
+                        <li className="p-2 text-red-500">Not found</li>
+                      )
+                    ) : (
+                      state.purchasedTokens.map((token, index) => (
+                        <li
+                          key={index}
+                          onMouseDown={() => setState(prevState => ({ ...prevState, destToken: token.address }))}
+                          className="p-2 cursor-pointer hover:bg-gray-100"
+                        >
+                          {token.symbol ? `${token.symbol} (${token.address})` : "Not found"}
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Nhập Amount */}
+          <div className="mb-4">
+            <label className="block mb-1 font-medium text-white/60">Amount</label>
             <input
-              type="password"
-              value={state.privateKey}
-              onChange={(e) => setState(prevState => ({ ...prevState, privateKey: e.target.value }))}
-              className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              type="text"
+              value={state.amount}
+              onChange={(e) => setState(prevState => ({ ...prevState, amount: e.target.value }))}
+              className="w-full p-3 bg-gray-50 rounded-lg border text-black border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-        )}
 
-        {/* Checkbox để chọn trả thêm phí gas cho miner */}
-        {!state.useBrowserWallet && (
-          <label className="flex items-center mb-4 cursor-pointer text-gray-600">
+          {!state.isBuyMode && (
+            <div className="flex justify-between mb-4">
+              {["24%", "42%", "69%", "100%"].map((percentage, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handlePercentageClick(parseInt(percentage))}
+                  className="bg-gray-100 px-4 py-2 rounded-lg transition hover:bg-gray-200"
+                >
+                  {percentage}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <label className="flex items-center mb-4 cursor-pointer">
             <input
               type="checkbox"
-              checked={state.extraGasForMiner}
-              onChange={(e) => setState(prevState => ({ ...prevState, extraGasForMiner: e.target.checked }))}
+              checked={state.useBrowserWallet}
+              onChange={(e) => setState(prevState => ({ ...prevState, useBrowserWallet: e.target.checked }))}
               className="mr-2 accent-blue-500"
             />
-            <span className="font-medium">Pay additional gas fee for Miner</span>
+            <span className="font-medium text-white/60">Use Browser Wallet (MetaMask)</span>
           </label>
-        )}
 
-        {/* Nhập Slippage */}
-        <div className="mb-4">
-          <label className="block mb-1 font-medium text-gray-600">Slippage</label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={state.slippage}
-            onChange={(e) => setState(prevState => ({ ...prevState, slippage: parseInt(e.target.value) }))}
-            className="w-full"
-          />
-          <div className="text-center text-gray-700">{state.slippage}%</div>
+          {!state.useBrowserWallet && (
+            <div className="mb-4">
+              <label className="block mb-1 font-medium text-white/60">Private key</label>
+              <input
+                type="password"
+                value={state.privateKey}
+                onChange={(e) => setState(prevState => ({ ...prevState, privateKey: e.target.value }))}
+                className="w-full p-3 bg-gray-50 text-black rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
+
+          {/* Checkbox để chọn trả thêm phí gas cho miner */}
+          {!state.useBrowserWallet && (
+            <label className="flex items-center mb-4 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={state.extraGasForMiner}
+                onChange={(e) => setState(prevState => ({ ...prevState, extraGasForMiner: e.target.checked }))}
+                className="mr-2 accent-blue-500"
+              />
+              <span className="font-medium text-white/60">Pay additional gas fee for Miner</span>
+            </label>
+          )}
+
+          {/* Nhập Slippage */}
+          <div className="mb-4">
+            <label className="block mb-1 font-medium text-white/60">Slippage</label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={state.slippage}
+              onChange={(e) => setState(prevState => ({ ...prevState, slippage: parseInt(e.target.value) }))}
+              className="w-full"
+            />
+            <div className="text-center text-white/60">{state.slippage}%</div>
+          </div>
+
+          {/* Giao diện theo nền tảng */}
+          {state.platform === "liquidfun" ? (
+            <LiquidFunPlatform
+              isBuyMode={state.isBuyMode}
+              wallet={wallet}
+              amount={state.amount}
+              platformWallet={state.platformWallet}
+              srcToken={state.srcToken}
+              destToken={state.destToken}
+              chainId={state.chainId}
+              slippage={state.slippage}
+              handleChainSwitch={handleChainSwitch}
+              loadBalance={(address) => fetchWETHBalance(address)}
+              handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
+              addTokenToStorage={(address) => addTokenToStorage(address)}
+            />
+          ) : state.platform === "wow" ? (
+            <WowPlatform
+              rpcUrl={chainsConfig[state.chainId]?.rpcUrl}
+              isBuyMode={state.isBuyMode}
+              wallet={wallet}
+              contractAddress={state.isBuyMode ? state.destToken : state.srcToken}
+              amount={state.amount}
+              useBrowserWallet={state.useBrowserWallet}
+              loadBalance={(address) => fetchWETHBalance(address)}
+              handleChainSwitch={handleChainSwitch}
+              extraGasForMiner={state.extraGasForMiner}
+              handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
+              addTokenToStorage={(address) => addTokenToStorage(address)}
+            />
+          ) : (
+            <MoonXPlatform
+              chainId={state.chainId}
+              rpcUrl={chainsConfig[state.chainId]?.rpcUrl}
+              isBuyMode={state.isBuyMode}
+              wallet={wallet}
+              tokenAdress={state.isBuyMode ? state.destToken : state.srcToken}
+              slippage={state.slippage}
+              amount={state.amount}
+              useBrowserWallet={state.useBrowserWallet}
+              handleChainSwitch={handleChainSwitch}
+              loadBalance={(address) => fetchWETHBalance(address)}
+              extraGasForMiner={state.extraGasForMiner}
+              handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
+              addTokenToStorage={(address) => addTokenToStorage(address)}
+            />
+          )}
+
+          {/* Thông báo giao dịch */}
+          {state.transactionHash && (
+            <p className="mt-4 text-center font-bold text-green-500 overflow-hidden whitespace-nowrap text-ellipsis">
+              Transaction successful. Tx: <a href={`${chainsConfig[state.chainId]?.scanUrl}/tx/${state.transactionHash}`} target="_blank" rel="noopener noreferrer" className="underline">{state.transactionHash}</a>
+            </p>
+          )}
+
+          {/* Thông báo lỗi */}
+          {state.errorMessage && (
+            <p className="mt-4 text-center font-bold text-red-500">
+              Error: {state.errorMessage}
+            </p>
+          )}
         </div>
-
-        {/* Giao diện theo nền tảng */}
-        {state.platform === "liquidfun" ? (
-          <LiquidFunPlatform
-            isBuyMode={state.isBuyMode}
-            wallet={wallet}
-            amount={state.amount}
-            platformWallet={state.platformWallet}
-            srcToken={state.srcToken}
-            destToken={state.destToken}
-            chainId={state.chainId}
-            slippage={state.slippage}
-            handleChainSwitch={handleChainSwitch}
-            loadBalance={(address) => fetchWETHBalance(address)}
-            handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
-            addTokenToStorage={(address) => addTokenToStorage(address)}
-          />
-        ) : state.platform === "wow" ? (
-          <WowPlatform
-            rpcUrl={chainsConfig[state.chainId]?.rpcUrl}
-            isBuyMode={state.isBuyMode}
-            wallet={wallet}
-            contractAddress={state.isBuyMode ? state.destToken : state.srcToken}
-            amount={state.amount}
-            useBrowserWallet={state.useBrowserWallet}
-            loadBalance={(address) => fetchWETHBalance(address)}
-            handleChainSwitch={handleChainSwitch}
-            extraGasForMiner={state.extraGasForMiner}
-            handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
-            addTokenToStorage={(address) => addTokenToStorage(address)}
-          />
-        ) : (
-          <MoonXPlatform
-            chainId={state.chainId}
-            rpcUrl={chainsConfig[state.chainId]?.rpcUrl}
-            isBuyMode={state.isBuyMode}
-            wallet={wallet}
-            tokenAdress={state.isBuyMode ? state.destToken : state.srcToken}
-            slippage={state.slippage}
-            amount={state.amount}
-            useBrowserWallet={state.useBrowserWallet}
-            handleChainSwitch={handleChainSwitch}
-            loadBalance={(address) => fetchWETHBalance(address)}
-            extraGasForMiner={state.extraGasForMiner}
-            handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
-            addTokenToStorage={(address) => addTokenToStorage(address)}
-          />
-        )}
-
-        {/* Thông báo giao dịch */}
-        {state.transactionHash && (
-          <p className="mt-4 text-center font-bold text-green-500 overflow-hidden whitespace-nowrap text-ellipsis">
-            Transaction successful. Tx: <a href={`${chainsConfig[state.chainId]?.scanUrl}/tx/${state.transactionHash}`} target="_blank" rel="noopener noreferrer" className="underline">{state.transactionHash}</a>
-          </p>
-        )}
-
-        {/* Thông báo lỗi */}
-        {state.errorMessage && (
-          <p className="mt-4 text-center font-bold text-red-500">
-            Error: {state.errorMessage}
-          </p>
-        )}
       </div>
-    </div>
+    </>
   );
 }

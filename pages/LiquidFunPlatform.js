@@ -139,16 +139,16 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
 
     return (
         <div>
-            <div className="mb-4 text-center text-gray-700">
+            <div className="mb-4 text-center text-white/60">
                 {isBuyMode
                     ? `Amount to pay (with slippage): ${ethers.formatUnits(displayAmount, 18)} ${srcToken}`
                     : `Amount to receive (with slippage): ${ethers.formatUnits(displayAmount, 18)} ${destToken}`}
             </div>
 
             {isBuyMode ? (
-                <button disabled={loading} onClick={handleBuy} className="w-full bg-green-500 text-white p-2 rounded">{loading ? "Buy ..." : "Buy Token on LiquidFun"}</button>
+                <button disabled={loading} onClick={handleBuy} className="w-full bg-green-600 hover:bg-green-800 text-white/60 p-2 rounded">{loading ? "Buy ..." : "Buy Token on LiquidFun"}</button>
             ) : (
-                <button disabled={loading} onClick={handleSell} className="w-full bg-red-500 text-white p-2 rounded">{loading ? "Sell ..." : "Sell Token on LiquidFun"}</button>
+                <button disabled={loading} onClick={handleSell} className="w-full bg-red-600 hover:bg-red-800 text-white/0 p-2 rounded">{loading ? "Sell ..." : "Sell Token on LiquidFun"}</button>
             )}
             {errorMessage && <p className="text-red-500">{errorMessage}</p>}
         </div>
