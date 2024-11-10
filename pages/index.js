@@ -14,7 +14,7 @@ export default function Home() {
     srcToken: "", // Token gốc
     destToken: "", // Token đích
     amount: "0",
-    slippage: 10,
+    slippage: 3,
     isBuyMode: true,
     platformWallet: "0x45C06f7aca34d031d799c446013aaa7A3E5F5D98",
     walletAddress: "",
