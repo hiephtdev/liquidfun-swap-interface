@@ -18,9 +18,17 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
     // Hàm xử lý giao dịch
     const handleTransaction = async () => {
         try {
-            setLoading(true);
             setErrorMessage("");
             handleTransactionComplete("");
+            if (!contractAddress) {
+                setErrorMessage("Contract address is not set.");
+                return;
+            }
+            if (!amount || amount === "0") {
+                setErrorMessage("Invalid amount.");
+                return;
+            }
+            setLoading(true);
             const chainSwitched = await handleChainSwitch();
             if (!chainSwitched) return;
             const contract = getContractInstance();

@@ -316,6 +316,23 @@ export default function Home() {
     return `${address.slice(0, 6)}...${address.slice(-5)}`;
   };
 
+  useEffect(() => {
+    const autoConnectWallet = async () => {
+      if (typeof window !== "undefined" && window.ethereum && state.useBrowserWallet) {
+        const savedAddress = localStorage.getItem("mys:liquidfun-connectedWalletAddress");
+        if (savedAddress) {
+          setState((prevState) => ({ ...prevState, walletAddress: savedAddress }));
+          await fetchTokenBalance(savedAddress);
+          await fetchWETHBalance(savedAddress);
+        } else {
+          await connectWallet(); // Automatically connect if no address is saved
+        }
+      }
+    };
+
+    autoConnectWallet();
+  }, [state.useBrowserWallet, connectWallet, fetchTokenBalance, fetchWETHBalance]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-10 flex justify-center items-center">
       <div className="w-full max-w-xl bg-white p-6 rounded-xl shadow-lg shadow-gray-400/30 relative">

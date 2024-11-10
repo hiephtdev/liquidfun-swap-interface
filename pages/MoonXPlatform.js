@@ -33,9 +33,18 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
     // Hàm xử lý giao dịch
     const handleTransaction = async () => {
         try {
-            setLoading(true);
             setErrorMessage("");
             handleTransactionComplete("");
+            if (!tokenAdress) {
+                setErrorMessage("Contract address is not set.");
+                return;
+            }
+            if (!amount || amount === "0") {
+                setErrorMessage("Invalid amount.");
+                return;
+            }
+
+            setLoading(true);
             const chainSwitched = await handleChainSwitch();
             if (!chainSwitched) return;
             const contract = getContractInstance();

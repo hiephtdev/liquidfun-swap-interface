@@ -47,9 +47,18 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
 
     const handleBuy = async () => {
         try {
-            setLoading(true);
             setErrorMessage("");
             handleTransactionComplete("");
+            if (!srcToken || !destToken) {
+                setErrorMessage("Invalid token addresses.");
+                return;
+            }
+            if (!amount || amount === "0") {
+                setErrorMessage("Invalid amount.");
+                return;
+            }
+
+            setLoading(true);
             const chainSwitched = await handleChainSwitch();
             if (!chainSwitched) return;
             // Lấy giá trị chính xác cho giao dịch từ API để tránh dữ liệu cũ
@@ -88,6 +97,17 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
     const handleSell = async () => {
         try {
             setErrorMessage("");
+            handleTransactionComplete("");
+            if (!srcToken || !destToken) {
+                setErrorMessage("Invalid token addresses.");
+                return;
+            }
+            if (!amount || amount === "0") {
+                setErrorMessage("Invalid amount.");
+                return;
+            }
+            setLoading(true);
+
             const chainSwitched = await handleChainSwitch();
             if (!chainSwitched) return;
             const apiUrl = `https://api.liquid.fun/v1/swap/rate?chainId=${chainId}&src=${srcToken}&dest=${destToken}&srcAmount=${amount}`;
@@ -112,6 +132,8 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch bán trên LiquidFun:", error);
             setErrorMessage(`Error executing sell transaction on LiquidFun: ${error.shortMessage ?? error.message ?? error}`);
+        } finally {
+            setLoading(false);
         }
     };
 
