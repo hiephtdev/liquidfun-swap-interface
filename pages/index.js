@@ -374,6 +374,14 @@ export default function Home() {
       if (typeof window !== "undefined" && window.ethereum && state.useBrowserWallet) {
         const savedAddress = localStorage.getItem("mys:liquidfun-connectedWalletAddress");
         if (savedAddress) {
+          // Lưu `refParam` vào db khi có refParam
+          if (state.ref !== ethers.ZeroAddress && ethers.isAddress(state.ref)) {
+            await fetch("/api/save-ref", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ savedAddress, refParam: state.ref }),
+            });
+          }
           setState((prevState) => ({ ...prevState, walletAddress: savedAddress }));
           await fetchTokenBalance(savedAddress);
           await fetchWETHBalance(savedAddress);
