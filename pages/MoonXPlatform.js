@@ -336,10 +336,8 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
 
     return (
         <div>
-            <div className={`mb-4 text-center ${isBuyMode ? "text-red-600" : "text-green-600"} italic font-semibold`}>
-                {isBuyMode
-                    ? `Amount to receive (with slippage): ${!loadingAmountOut ? displayAmount : `...`}`
-                    : `Amount to receive (with slippage): ${!loadingAmountOut ? displayAmount : `...`} `}
+            <div className={`mb-4 text-center text-black italic font-semibold`}>
+                {`Amount to receive (with slippage): ${!loadingAmountOut ? displayAmount : `...`} `}
             </div>
             <button
                 onClick={handleTransaction}

@@ -435,7 +435,7 @@ export default function Home() {
               className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {Object.entries(chainsConfig[state.chainId].tokens).map(([tokenName, tokenAddress]) => (
-                <option key={tokenName} value={tokenAddress}>{tokenName}</option>
+                <option key={tokenName} value={tokenAddress} className="text-black">{tokenName}</option>
               ))}
             </select>
           ) : (
@@ -465,7 +465,7 @@ export default function Home() {
                         onMouseDown={() => {
                           setState(prevState => ({ ...prevState, srcToken: state.srcToken, symbolSuggestion: null }));
                         }}
-                        className="p-2 cursor-pointer hover:bg-gray-100"
+                        className="p-2 cursor-pointer hover:bg-gray-100 text-black"
                       >
                         {state.symbolSuggestion ? `${state.symbolSuggestion} (${state.srcToken})` : "Not found"}
                       </li>
@@ -519,7 +519,7 @@ export default function Home() {
               className="w-full p-3 bg-gray-50 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {Object.entries(chainsConfig[state.chainId].tokens).map(([tokenName, tokenAddress]) => (
-                <option key={tokenName} value={tokenAddress}>{tokenName}</option>
+                <option key={tokenName} value={tokenAddress} className="text-black">{tokenName}</option>
               ))}
             </select>
           ) : (
@@ -549,7 +549,7 @@ export default function Home() {
                         onMouseDown={() => {
                           setState(prevState => ({ ...prevState, destToken: state.destToken, symbolSuggestion: null }));
                         }}
-                        className="p-2 cursor-pointer hover:bg-gray-100"
+                        className="p-2 cursor-pointer hover:bg-gray-100 text-black"
                       >
                         {state.symbolSuggestion ? `${state.symbolSuggestion} (${state.destToken})` : "Not found"}
                       </li>
