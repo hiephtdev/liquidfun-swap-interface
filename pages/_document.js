@@ -10,7 +10,7 @@ export async function getServerSideProps(context) {
   };
 }
 
-export default function Document() {
+export default function Document({ referralLink }) {
   return (
     <Html lang="en">
       <title>MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ</title>
