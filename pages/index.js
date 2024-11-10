@@ -7,8 +7,22 @@ import MoonXPlatform from "./MoonXPlatform";
 import { chainsConfig } from "@/constants/common";
 import { useRouter } from 'next/router';
 import FarcasterShareIcon from "@/components/icons/FarcasterShareIcon";
+import Head from "next/head";
 
-export default function Home() {
+export async function getServerSideProps(context) {
+  console.log('context', context)
+  const { query } = context;
+  const refAddress = query.ref || ethers.ZeroAddress; // Lấy giá trị của `ref` từ URL
+  const qreferralLink = `https://fun.moonx.farm/?ref=${refAddress}`;
+
+  return {
+    props: {
+      qreferralLink,
+    },
+  };
+}
+
+export default function Home({ qreferralLink }) {
   const router = useRouter();
 
   const [state, setState] = useState({
@@ -397,6 +411,14 @@ export default function Home() {
 
   return (
     <>
+      <Head>
+        <title>MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ</title>
+        <meta property="fc:frame" content="vNext" />
+        <meta property="fc:frame:image" content="https://fun.moonx.farm/card.jpg" />
+        <meta property="fc:frame:button:1" content="Trade Now" />
+        <meta property="fc:frame:button:1:action" content="link" />
+        <meta property="fc:frame:button:1:target" content={qreferralLink} />
+      </Head>
       <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-10 flex justify-center items-center">
         <div className="w-full max-w-xl bg-white p-6 rounded-xl shadow-lg shadow-gray-400/30 relative">
           {/* Thêm logo ở đầu giao diện */}
