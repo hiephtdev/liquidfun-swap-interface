@@ -9,6 +9,16 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import FarcasterShareIcon from "@/components/icons/FarcasterShareIcon";
 
+export async function getServerSideProps(context) {
+  const { query } = context; // Lấy các query parameters từ URL
+  const referralLink = `https://fun.moonx.farm/?ref=${query.ref}`; // Xây dựng link từ query parameter
+  return {
+    props: {
+      referralLink,
+    },
+  };
+}
+
 export default function Home() {
   const router = useRouter();
 
@@ -405,7 +415,7 @@ export default function Home() {
         <meta property="fc:frame:image" content="https://fun.moonx.farm/card.jpg" />
         <meta property="fc:frame:button:1" content="Trade Now" />
         <meta property="fc:frame:button:1:action" content="link" />
-        <meta property="fc:frame:button:1:target" content={`https://fun.moonx.farm/?ref=${state.ref}`} />
+        <meta property="fc:frame:button:1:target" content={`https://fun.moonx.farm/?ref=${referralLink}`} />
       </Head>
       <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-10 flex justify-center items-center">
         <div className="w-full max-w-xl bg-white p-6 rounded-xl shadow-lg shadow-gray-400/30 relative">
@@ -794,7 +804,7 @@ export default function Home() {
               <div className="flex items-center space-x-2">
                 <span>Share your link ref</span>
                 <button onClick={handleCopyLink}>
-                  <i className="fas fa-copy cursor-pointer"></i>
+                  <i className="fas fa-copy cursor-pointer text-gray-500 hover:text-blue-700"></i>
                 </button>
                 <button onClick={handleShareOnX}>
                   <i className="fab fa-twitter text-blue-500"></i>
