@@ -321,7 +321,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
 
         // Tính toán amountOutMin với độ trượt giá
         const slippage = (bestQuote * BigInt(slippagePercentage)) / 100n;
-        const amountOutMin = bestQuote - slippage;
+        const amountOutMin = bestQuote;
 
         return { amountOutMin, poolAddress };
     }
@@ -329,7 +329,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
     return (
         <div>
             <div className={`mb-4 text-center italic font-semibold`}>
-                {`Amount to receive (with slippage): ${!loadingAmountOut ? displayAmount : `...`} `}
+                {`Amount to receive (not with slippage): ${!loadingAmountOut ? displayAmount : `...`} `}
             </div>
             <button
                 onClick={handleTransaction}
