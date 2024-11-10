@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     // Kiểm tra nếu đã tồn tại `refParam` cho `walletAddress` này
     const existingRef = await Ref.findOne({ walletAddress });
     if (existingRef && existingRef.refParam) {
-      return res.status(200).json({ message: 'RefParam already exists, no changes made.' });
+      return res.status(200).json({ message: 'RefParam already exists, no changes made.', ref: existingRef.refParam });
     }
 
     // Nếu chưa có, tạo hoặc cập nhật refParam
