@@ -8,7 +8,6 @@ export default function Document() {
       <meta property="og:title" content="MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ" />
       <meta property="og:description" content="Trade tokens quickly and securely on MoonX Farm. Connect your wallet to trade on LiquidFun and Wow.XYZ or add liquidity on DEX platforms similar to Uniswap. Supports MetaMask and popular tokens like WETH, USDC, and USDT." />
       <meta property="og:image" content="https://fun.moonx.farm/card.jpg" />
-      <meta property="og:url" content="https://fun.moonx.farm" />
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content="MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ" />
