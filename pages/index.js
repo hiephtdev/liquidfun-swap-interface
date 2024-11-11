@@ -353,7 +353,7 @@ export default function Home({ qreferralLink }) {
       console.error("Failed to initialize wallet:", error);
       setState(prevState => ({ ...prevState, errorMessage: "Failed to initialize wallet" }));
     }
-  }, [state.useBrowserWallet, state.privateKey, state.chainId, state.platform]);
+  }, [state.useBrowserWallet, state.privateKey, state.chainId, state.platform, state.srcToken, state.destToken, wallets]);
 
   useEffect(() => {
     initializeWallet();
