@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
     // Nếu chưa có, tạo hoặc cập nhật refParam
     await Ref.findOneAndUpdate(
-      { walletAddress },
+      { walletAddress: { $regex: new RegExp(`^${walletAddress}$`, 'i') } },
       { refParam },
       { upsert: true, new: true }
     );
