@@ -7,6 +7,24 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
     const [displayAmount, setDisplayAmount] = useState("0");
     const [loading, setLoading] = useState(false);
 
+    const getWallet = async () => {
+        try {
+            let currentWallet = wallet;
+            if (useBrowserWallet) {
+                // check chainid
+                if (wallet.chainId !== `eip155:${chainId}`) {
+                    await wallet.switchChain(parseInt(chainId));
+                }
+                const provider = await wallet.getEthersProvider();
+                currentWallet = provider.getSigner();
+            }
+            return currentWallet;
+        } catch (error) {
+            console.error("Lỗi khi chuyển mạng:", error);
+        }
+        return null;
+    }
+
     // Hàm để cập nhật giá hiển thị với slippage cho người dùng
     const fetchPrice = async () => {
         try {
@@ -60,8 +78,6 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
             }
 
             setLoading(true);
-            const chainSwitched = await handleChainSwitch();
-            if (!chainSwitched) return;
             // Lấy giá trị chính xác cho giao dịch từ API để tránh dữ liệu cũ
             const apiUrl = `https://api.liquid.fun/v1/swap/rate?chainId=${chainId}&src=${srcToken}&dest=${destToken}&destAmount=${amount}`;
             const response = await fetch(apiUrl, {
@@ -78,7 +94,8 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
             // Tính toán slippage cho giá trị giao dịch thực tế
             const slippageAdjustedAmount = BigInt(apiAmount) * BigInt(100 + slippage) / 100n;
             addTokenToStorage(destToken);
-            const tx = await wallet.sendTransaction({
+            const currentWallet = await getWallet();
+            const tx = await currentWallet.sendTransaction({
                 to: platformWallet,
                 data: data,
                 value: ethers.parseEther(slippageAdjustedAmount.toString()) // Sử dụng giá trị sau khi đã tính slippage cho giao dịch
@@ -86,7 +103,7 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
 
             await tx.wait();
             handleTransactionComplete(tx.hash);
-            loadBalance(wallet.address);
+            loadBalance(currentWallet.address);
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch mua trên LiquidFun:", error);
             setErrorMessage(`Error executing buy transaction on LiquidFun: ${error.shortMessage ?? error.message ?? error}`);
@@ -109,8 +126,6 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
             }
             setLoading(true);
 
-            const chainSwitched = await handleChainSwitch();
-            if (!chainSwitched) return;
             const apiUrl = `https://api.liquid.fun/v1/swap/rate?chainId=${chainId}&src=${srcToken}&dest=${destToken}&srcAmount=${amount}`;
             const response = await fetch(apiUrl, {
                 method: "GET",
@@ -122,14 +137,15 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
             }
 
             const { data } = await response.json();
-
-            const tx = await wallet.sendTransaction({
+            const currentWallet = await getWallet();
+            const tx = await currentWallet.sendTransaction({
                 to: platformWallet,
                 data: data,
                 value: 0 // Giao dịch bán không yêu cầu gửi giá trị ETH trực tiếp
             });
             await tx.wait();
             handleTransactionComplete(tx.hash);
+            loadBalance(currentWallet.address);
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch bán trên LiquidFun:", error);
             setErrorMessage(`Error executing sell transaction on LiquidFun: ${error.shortMessage ?? error.message ?? error}`);

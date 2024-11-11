@@ -1,19 +1,30 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
 
-export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete, loadBalance, handleChainSwitch, addTokenToStorage, extraGasForMiner, additionalGas }) {
+export default function WowPlatform({ chainId, rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete, loadBalance, addTokenToStorage, extraGasForMiner, additionalGas }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
     // Hàm tạo instance của contract, sử dụng trực tiếp `wallet` đã cấu hình
-    const getContractInstance = () => new ethers.Contract(
-        contractAddress,
-        [
-            "function buy(address recipient, address refundRecipient, address orderReferrer, string comment, uint8 expectedMarketType, uint256 minOrderSize, uint160 sqrtPriceLimitX96)",
-            "function sell(uint256 tokensToSell, address recipient, address orderReferrer, string comment, uint8 expectedMarketType, uint256 minPayoutSize, uint160 sqrtPriceLimitX96)"
-        ],
-        wallet
-    );
+    const getContractInstance = async () => {
+        let currentWallet = wallet;
+        if (useBrowserWallet) {
+            // check chainid
+            if (wallet.chainId !== `eip155:${chainId}`) {
+                await wallet.switchChain(parseInt(chainId));
+            }
+            const provider = await wallet.getEthersProvider();
+            currentWallet = provider.getSigner();
+        }
+        return new ethers.Contract(
+            contractAddress,
+            [
+                "function buy(address recipient, address refundRecipient, address orderReferrer, string comment, uint8 expectedMarketType, uint256 minOrderSize, uint160 sqrtPriceLimitX96)",
+                "function sell(uint256 tokensToSell, address recipient, address orderReferrer, string comment, uint8 expectedMarketType, uint256 minPayoutSize, uint160 sqrtPriceLimitX96)"
+            ],
+            currentWallet
+        )
+    };
 
     // Hàm xử lý giao dịch
     const handleTransaction = async () => {
@@ -29,9 +40,7 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
                 return;
             }
             setLoading(true);
-            const chainSwitched = await handleChainSwitch();
-            if (!chainSwitched) return;
-            const contract = getContractInstance();
+            const contract = await getContractInstance();
             let transaction = {};
 
             if (isBuyMode) {

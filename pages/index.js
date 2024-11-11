@@ -1,4 +1,5 @@
-import { Button, Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
+import { usePrivy, useWallets } from '@privy-io/react-auth';
+import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import React, { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import LiquidFunPlatform from "./LiquidFunPlatform";
@@ -24,7 +25,8 @@ export async function getServerSideProps(context) {
 
 export default function Home({ qreferralLink }) {
   const router = useRouter();
-
+  const { connectWallet: connectPrivyWallet } = usePrivy();
+  const { wallets } = useWallets();
   const [state, setState] = useState({
     chainId: "8453",
     platform: "wow",
@@ -49,6 +51,8 @@ export default function Home({ qreferralLink }) {
     ref: ethers.ZeroAddress,
     additionalGas: 1,
   });
+
+
 
   // Kiểm tra và lấy refParam khi có
   useEffect(() => {
@@ -147,20 +151,7 @@ export default function Home({ qreferralLink }) {
   const connectWallet = useCallback(async () => {
     if (typeof window !== "undefined" && window.ethereum) {
       try {
-        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-        const address = accounts[0];
-        setState(prevState => ({ ...prevState, walletAddress: address }));
-        localStorage.setItem("mys:liquidfun-connectedWalletAddress", address);
-        await fetchTokenBalance(address); // Lấy lại số dư sau khi kết nối
-
-        // Lưu `refParam` vào db khi có refParam
-        if (state.ref !== ethers.ZeroAddress && ethers.isAddress(state.ref)) {
-          await fetch("/api/save-ref", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ walletAddress: address, refParam: state.ref }),
-          });
-        }
+        connectPrivyWallet();
       } catch (error) {
         console.error("Failed to connect wallet:", error);
         setState(prevState => ({ ...prevState, errorMessage: "Failed to connect wallet" }));
@@ -168,7 +159,39 @@ export default function Home({ qreferralLink }) {
     } else {
       setState(prevState => ({ ...prevState, errorMessage: "Wallet address not found. Please install MetaMask." }));
     }
-  }, [state.ref]);
+  }, []);
+
+  useEffect(() => {
+    const callbackWhenConnected = async () => {
+      try {
+        if (wallets && wallets.length > 0) {
+          setState(prevState => ({ ...prevState, errorMessage: "" }));
+          const address = wallets[0].address;
+          setState(prevState => ({ ...prevState, walletAddress: address }));
+          localStorage.setItem("mys:liquidfun-connectedWalletAddress", address);
+          await fetchTokenBalance(address); // Lấy lại số dư sau khi kết nối
+
+          // Lưu `refParam` vào db khi có refParam
+          if (state.ref !== ethers.ZeroAddress && ethers.isAddress(state.ref)) {
+            await fetch("/api/save-ref", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ walletAddress: address, refParam: state.ref }),
+            });
+          }
+
+          setState((prevState) => ({ ...prevState, walletAddress: address }));
+          await fetchTokenBalance(address);
+          await fetchWETHBalance(address);
+          setWallet(wallets[0]);
+        }
+      } catch (error) {
+        console.error("Lỗi khi kết nối ví:", error);
+        setState(prevState => ({ ...prevState, errorMessage: "Error connecting wallet" }));
+      }
+    };
+    callbackWhenConnected();
+  }, [wallets, state.ref, state.chainId, state.platform]);
 
   const fetchWETHBalance = useCallback(async (address) => {
     if (address && chainsConfig[state.chainId]?.tokens.WETH) {
@@ -255,6 +278,11 @@ export default function Home({ qreferralLink }) {
       amount: "0"
     }));
     localStorage.removeItem("mys:liquidfun-connectedWalletAddress");
+    if (wallets && wallets.length > 0) {
+      for (let connectWallet of wallets) {
+        connectWallet.disconnect();
+      }
+    }
   }, []);
 
   const getProvider = useCallback(() => {
@@ -298,27 +326,6 @@ export default function Home({ qreferralLink }) {
     }
   }, [state.srcToken, state.chainId]);
 
-  const handleChainSwitch = useCallback(async () => {
-    if (typeof window !== "undefined" && state.useBrowserWallet && window.ethereum) {
-      const currentChainId = await window.ethereum.request({ method: "eth_chainId" });
-      if (currentChainId !== `0x${parseInt(state.chainId, 10).toString(16)}`) {
-        try {
-          await window.ethereum.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: `0x${parseInt(state.chainId, 10).toString(16)}` }]
-          });
-        } catch (error) {
-          setState(prevState => ({
-            ...prevState,
-            errorMessage: error.code === 4902 ? "The chain has not been added to MetaMask. Please add the chain manually." : "Error switching chains."
-          }));
-          return false;
-        }
-      }
-    }
-    return true;
-  }, [state.chainId, state.useBrowserWallet]);
-
   // Hàm kiểm tra tính hợp lệ của Private Key
   const isValidPrivateKey = (key) => {
     // Kiểm tra nếu có tiền tố "0x", chiều dài phải là 66, nếu không thì là 64
@@ -332,24 +339,22 @@ export default function Home({ qreferralLink }) {
       const provider = getProvider();
       let selectedWallet;
 
-      if (state.useBrowserWallet && typeof window !== "undefined" && window.ethereum) {
-        const browserProvider = new ethers.BrowserProvider(window.ethereum);
-        selectedWallet = await browserProvider.getSigner();
-        await connectWallet(); // Kết nối MetaMask nếu dùng ví trình duyệt
+      if (state.useBrowserWallet && typeof window !== "undefined" && window.ethereum && wallets && wallets.length > 0) {
+        setWallet(wallets[0]);
       } else if (state.privateKey) {
         if (!isValidPrivateKey(state.privateKey)) return;
         console.log("Initializing wallet...");
         selectedWallet = new ethers.Wallet(state.privateKey, provider);
+        setWallet(selectedWallet);
       } else {
         setState(prevState => ({ ...prevState, errorMessage: "No valid wallet connection method found." }));
         return;
       }
-      setWallet(selectedWallet);
     } catch (error) {
       console.error("Failed to initialize wallet:", error);
       setState(prevState => ({ ...prevState, errorMessage: "Failed to initialize wallet" }));
     }
-  }, [state.useBrowserWallet, state.privateKey, state.chainId, connectWallet]);
+  }, [state.useBrowserWallet, state.privateKey, state.chainId]);
 
   useEffect(() => {
     initializeWallet();
@@ -385,31 +390,6 @@ export default function Home({ qreferralLink }) {
     if (!address) return "";
     return `${address.slice(0, 6)}...${address.slice(-5)}`;
   };
-
-  useEffect(() => {
-    const autoConnectWallet = async () => {
-      if (typeof window !== "undefined" && window.ethereum && state.useBrowserWallet) {
-        const savedAddress = localStorage.getItem("mys:liquidfun-connectedWalletAddress");
-        if (savedAddress) {
-          // Lưu `refParam` vào db khi có refParam
-          if (state.ref !== ethers.ZeroAddress && ethers.isAddress(state.ref)) {
-            await fetch("/api/save-ref", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ walletAddress: savedAddress, refParam: state.ref }),
-            });
-          }
-          setState((prevState) => ({ ...prevState, walletAddress: savedAddress }));
-          await fetchTokenBalance(savedAddress);
-          await fetchWETHBalance(savedAddress);
-        } else {
-          await connectWallet(); // Automatically connect if no address is saved
-        }
-      }
-    };
-
-    autoConnectWallet();
-  }, [state.useBrowserWallet, connectWallet, fetchTokenBalance, fetchWETHBalance]);
 
   return (
     <>
@@ -753,7 +733,6 @@ export default function Home({ qreferralLink }) {
               destToken={state.destToken}
               chainId={state.chainId}
               slippage={state.slippage}
-              handleChainSwitch={handleChainSwitch}
               loadBalance={(address) => { Promise.all([fetchWETHBalance(address), fetchTokenBalance(address)]); }}
               handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
               addTokenToStorage={(address) => addTokenToStorage(address)}
@@ -767,11 +746,11 @@ export default function Home({ qreferralLink }) {
               amount={state.amount}
               useBrowserWallet={state.useBrowserWallet}
               loadBalance={(address) => { Promise.all([fetchWETHBalance(address), fetchTokenBalance(address)]); }}
-              handleChainSwitch={handleChainSwitch}
               extraGasForMiner={state.extraGasForMiner}
               handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
               addTokenToStorage={(address) => addTokenToStorage(address)}
               additionalGas={state.additionalGas}
+              chainId={state.chainId}
             />
           ) : (
             <MoonXPlatform
@@ -783,12 +762,11 @@ export default function Home({ qreferralLink }) {
               slippage={state.slippage}
               amount={state.amount}
               useBrowserWallet={state.useBrowserWallet}
-              handleChainSwitch={handleChainSwitch}
               loadBalance={(address) => { Promise.all([fetchWETHBalance(address), fetchTokenBalance(address)]); }}
               extraGasForMiner={state.extraGasForMiner}
               handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
               addTokenToStorage={(address) => addTokenToStorage(address)}
-              ref={state.ref}
+              referral={state.ref}
               additionalGas={state.additionalGas}
             />
           )}

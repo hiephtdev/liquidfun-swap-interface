@@ -2,21 +2,32 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { chainsConfig } from "@/constants/common";
 
-export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, tokenAdress, slippage, amount, useBrowserWallet, handleTransactionComplete, loadBalance, addTokenToStorage, handleChainSwitch, extraGasForMiner, ref, additionalGas }) {
+export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, tokenAdress, slippage, amount, useBrowserWallet, handleTransactionComplete, loadBalance, addTokenToStorage, extraGasForMiner, referral, additionalGas }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [loadingAmountOut, setLoadingAmountOut] = useState(false);
     const [displayAmount, setDisplayAmount] = useState("0");
 
     // Hàm tạo instance của contract, sử dụng trực tiếp `wallet` đã cấu hình
-    const getContractInstance = () => new ethers.Contract(
-        process.env.NEXT_PUBLIC_MOONX_CONTRACT_ADDRESS,
-        [
-            "function moonXBuy(address tokenOut, uint8 slippagePercentage, address referrer) external payable",
-            "function moonXSell(address tokenIn, uint256[2] amountIns, uint8 slippagePercentage, address referrer) external"
-        ],
-        wallet
-    );
+    const getContractInstance = async () => {
+        let currentWallet = wallet;
+        if (useBrowserWallet) {
+            // check chainid
+            if (wallet.chainId !== `eip155:${chainId}`) {
+                await wallet.switchChain(parseInt(chainId));
+            }
+            const provider = await wallet.getEthersProvider();
+            currentWallet = provider.getSigner();
+        }
+        return new ethers.Contract(
+            process.env.NEXT_PUBLIC_MOONX_ADDRESS,
+            [
+                "function moonXBuy(address tokenOut, uint8 slippagePercentage, address referrer) external payable",
+                "function moonXSell(address tokenIn, uint256[2] amountIns, uint8 slippagePercentage, address referrer) external"
+            ],
+            currentWallet
+        )
+    };
 
     // Hàm tạo instance của token để thực hiện lệnh `approve`
     const getTokenContractInstance = () => new ethers.Contract(
@@ -46,9 +57,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
             }
 
             setLoading(true);
-            const chainSwitched = await handleChainSwitch();
-            if (!chainSwitched) return;
-            const contract = getContractInstance();
+            const contract = await getContractInstance();
             let transaction;
 
             if (isBuyMode) {
@@ -58,7 +67,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
             if (useBrowserWallet) {
                 // Thực hiện giao dịch khi dùng ví trên trình duyệt
                 transaction = isBuyMode
-                    ? await contract.moonXBuy(tokenAdress, slippage, ref, { value: ethers.parseEther(amount) })
+                    ? await contract.moonXBuy(tokenAdress, slippage, referral, { value: ethers.parseEther(amount) })
                     : await handleSellWithApprove(wallet, contract);
             } else {
                 // Thực hiện giao dịch khi dùng RPC, cần tính toán gas và thiết lập gas limit
@@ -90,7 +99,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
         }
 
         // Sau khi approve, thực hiện lệnh bán
-        return await contract.moonXSell(tokenAdress, [0n, amount], slippage, ref);
+        return await contract.moonXSell(tokenAdress, [0n, amount], slippage, referral);
     };
 
     // Hàm thực hiện giao dịch với ước tính gas, chỉ khi `useBrowserWallet` là `false`
@@ -142,7 +151,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
                 tokenAdress,
                 [0n, amount],
                 slippage,
-                ref
+                referral
             );
             const gasLimit = estimatedGas * BigInt(300) / BigInt(100);
             const gasData = await provider.getFeeData();
@@ -156,7 +165,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
                 tokenAdress,
                 [0n, amount],
                 slippage,
-                ref,
+                referral,
                 { gasLimit, ...gasOptions }
             );
         }
