@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { chainsConfig } from "@/constants/common";
 
-export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, tokenAdress, slippage, amount, useBrowserWallet, handleTransactionComplete, loadBalance, addTokenToStorage, handleChainSwitch, extraGasForMiner, ref }) {
+export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, tokenAdress, slippage, amount, useBrowserWallet, handleTransactionComplete, loadBalance, addTokenToStorage, handleChainSwitch, extraGasForMiner, ref, additionalGas }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [loadingAmountOut, setLoadingAmountOut] = useState(false);
@@ -24,6 +24,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
         [
             "function symbol() view returns (string)",
             "function decimals() view returns (uint8)",
+            "function balanceOf(address) view returns (uint256)",
             "function approve(address spender, uint256 amount) external returns (bool)",
             "function allowance(address owner, address spender) view returns (uint256)"
         ],
@@ -58,7 +59,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
                 // Thực hiện giao dịch khi dùng ví trên trình duyệt
                 transaction = isBuyMode
                     ? await contract.moonXBuy(tokenAdress, slippage, ref, { value: ethers.parseEther(amount) })
-                    : await handleSellWithApprove(contract);
+                    : await handleSellWithApprove(wallet, contract);
             } else {
                 // Thực hiện giao dịch khi dùng RPC, cần tính toán gas và thiết lập gas limit
                 transaction = await executeTransaction(contract, isBuyMode);
@@ -107,17 +108,26 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
             const gasLimit = estimatedGas * BigInt(300) / BigInt(100);
             let gasOptions = {};
             if (extraGasForMiner) {
-                gasOptions = { maxPriorityFeePerGas: gasData.maxPriorityFeePerGas, maxFeePerGas: gasData.maxFeePerGas }
+                gasOptions = { maxPriorityFeePerGas: gasData.maxPriorityFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei"), maxFeePerGas: gasData.maxFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei") }
             } else {
                 gasOptions = { gasPrice: gasData.gasPrice * 2n }
             }
 
-            return await contract.moonXBuy(
+            const buyTx = await contract.moonXBuy(
                 tokenAdress,
                 slippage,
                 ref,
                 { value: ethers.parseEther(amount), gasLimit, ...gasOptions }
             );
+
+            const tokenContract = getTokenContractInstance();
+            // Kiểm tra allowance
+            const [allowance, tokenAmout] = await Promise.all([tokenContract.allowance(wallet.address, spenderAddress), tokenContract.balanceOf(wallet.address)]);
+            if (allowance < tokenAmout) {
+                const approveTx = await tokenContract.approve(spenderAddress, tokenAmout);
+                await approveTx.wait();
+            }
+            return buyTx;
         } else {
             const tokenContract = getTokenContractInstance();
             const spenderAddress = process.env.NEXT_PUBLIC_MOONX_CONTRACT_ADDRESS;
@@ -138,7 +148,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
             const gasLimit = estimatedGas * BigInt(300) / BigInt(100);
             let gasOptions = {};
             if (extraGasForMiner) {
-                gasOptions = { maxPriorityFeePerGas: gasData.maxPriorityFeePerGas, maxFeePerGas: gasData.maxFeePerGas }
+                gasOptions = { maxPriorityFeePerGas: gasData.maxPriorityFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei"), maxFeePerGas: gasData.maxFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei") }
             } else {
                 gasOptions = { gasPrice: gasData.gasPrice * 2n }
             }

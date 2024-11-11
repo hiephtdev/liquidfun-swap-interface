@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
 
-export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete, loadBalance, handleChainSwitch, addTokenToStorage, extraGasForMiner }) {
+export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete, loadBalance, handleChainSwitch, addTokenToStorage, extraGasForMiner, additionalGas }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -81,9 +81,11 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
     // Hàm thực hiện giao dịch với ước tính gas, chỉ khi `useBrowserWallet` là `false`
     const executeTransaction = async (contract, isBuyMode) => {
         const provider = new ethers.JsonRpcProvider(rpcUrl);
-        const gasData = await provider.getFeeData();
 
         if (isBuyMode) {
+            let gasOptions = {};
+            const gasData = await provider.getFeeData();
+
             const estimatedGas = await contract.buy.estimateGas(
                 wallet.address,
                 wallet.address,
@@ -95,9 +97,8 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
                 { value: ethers.parseEther(amount) }
             );
             const gasLimit = estimatedGas * BigInt(300) / BigInt(100);
-            let gasOptions = {};
             if (extraGasForMiner) {
-                gasOptions = { maxPriorityFeePerGas: gasData.maxPriorityFeePerGas, maxFeePerGas: gasData.maxFeePerGas }
+                gasOptions = { maxPriorityFeePerGas: gasData.maxPriorityFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei"), maxFeePerGas: gasData.maxFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei") }
             } else {
                 gasOptions = { gasPrice: gasData.gasPrice * 2n }
             }
@@ -124,7 +125,7 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
             const gasLimit = estimatedGas * BigInt(300) / BigInt(100);
             let gasOptions = {};
             if (extraGasForMiner) {
-                gasOptions = { maxPriorityFeePerGas: gasData.maxPriorityFeePerGas, maxFeePerGas: gasData.maxFeePerGas }
+                gasOptions = { maxPriorityFeePerGas: gasData.maxPriorityFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei"), maxFeePerGas: gasData.maxFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei") }
             } else {
                 gasOptions = { gasPrice: gasData.gasPrice * 2n }
             }

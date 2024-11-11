@@ -45,8 +45,9 @@ export default function Home({ qreferralLink }) {
     ethBalance: "0", // Balance of ETH
     purchasedTokens: [], // Load initially from localStorage
     symbolSuggestion: null,
-    extraGasForMiner: false, // Thêm state mới
-    ref: ethers.ZeroAddress
+    extraGasForMiner: true, // Thêm state mới
+    ref: ethers.ZeroAddress,
+    additionalGas: 1,
   });
 
   // Kiểm tra và lấy refParam khi có
@@ -157,7 +158,7 @@ export default function Home({ qreferralLink }) {
           await fetch("/api/save-ref", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ walletAddress, refParam: state.ref }),
+            body: JSON.stringify({ walletAddress: address, refParam: state.ref }),
           });
         }
       } catch (error) {
@@ -327,8 +328,7 @@ export default function Home({ qreferralLink }) {
 
   const initializeWallet = useCallback(async () => {
     try {
-      if (!state.privateKey || !isValidPrivateKey(state.privateKey)) return;
-      console.log("Initializing wallet...");
+      setState(prevState => ({ ...prevState, errorMessage: "" }));
       const provider = getProvider();
       let selectedWallet;
 
@@ -337,6 +337,8 @@ export default function Home({ qreferralLink }) {
         selectedWallet = await browserProvider.getSigner();
         await connectWallet(); // Kết nối MetaMask nếu dùng ví trình duyệt
       } else if (state.privateKey) {
+        if (!isValidPrivateKey(state.privateKey)) return;
+        console.log("Initializing wallet...");
         selectedWallet = new ethers.Wallet(state.privateKey, provider);
       } else {
         setState(prevState => ({ ...prevState, errorMessage: "No valid wallet connection method found." }));
@@ -702,15 +704,28 @@ export default function Home({ qreferralLink }) {
 
           {/* Checkbox để chọn trả thêm phí gas cho miner */}
           {!state.useBrowserWallet && (
-            <label className="flex items-center mb-4 cursor-pointer text-gray-600">
-              <input
-                type="checkbox"
-                checked={state.extraGasForMiner}
-                onChange={(e) => setState(prevState => ({ ...prevState, extraGasForMiner: e.target.checked }))}
-                className="mr-2 accent-blue-500"
-              />
-              <span className="font-medium">Pay additional gas fee for Miner</span>
-            </label>
+            <>
+              <label className="flex items-center mb-4 cursor-pointer text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={state.extraGasForMiner}
+                  onChange={(e) => setState(prevState => ({ ...prevState, extraGasForMiner: e.target.checked }))}
+                  className="mr-2 accent-blue-500"
+                />
+                <span className="font-medium">Pay additional gas fee for Miner</span>
+              </label>
+              {state.extraGasForMiner && (
+                <label className="flex items-center mb-4 cursor-pointer text-gray-600">
+                  <input
+                    type="number"
+                    value={state.additionalGas}
+                    onChange={(e) => setState(prevState => ({ ...prevState, additionalGas: e.target.value }))}
+                    className="mr-2 text-black border max-w-24 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 p-2 rounded-lg"
+                  />
+                  <span className="font-medium">Gwei</span>
+                </label>
+              )}
+            </>
           )}
 
           {/* Nhập Slippage */}
@@ -739,7 +754,7 @@ export default function Home({ qreferralLink }) {
               chainId={state.chainId}
               slippage={state.slippage}
               handleChainSwitch={handleChainSwitch}
-              loadBalance={(address) => fetchWETHBalance(address)}
+              loadBalance={(address) => { Promise.all([fetchWETHBalance(address), fetchTokenBalance(address)]); }}
               handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
               addTokenToStorage={(address) => addTokenToStorage(address)}
             />
@@ -751,11 +766,12 @@ export default function Home({ qreferralLink }) {
               contractAddress={state.isBuyMode ? state.destToken : state.srcToken}
               amount={state.amount}
               useBrowserWallet={state.useBrowserWallet}
-              loadBalance={(address) => fetchWETHBalance(address)}
+              loadBalance={(address) => { Promise.all([fetchWETHBalance(address), fetchTokenBalance(address)]); }}
               handleChainSwitch={handleChainSwitch}
               extraGasForMiner={state.extraGasForMiner}
               handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
               addTokenToStorage={(address) => addTokenToStorage(address)}
+              additionalGas={state.additionalGas}
             />
           ) : (
             <MoonXPlatform
@@ -768,11 +784,12 @@ export default function Home({ qreferralLink }) {
               amount={state.amount}
               useBrowserWallet={state.useBrowserWallet}
               handleChainSwitch={handleChainSwitch}
-              loadBalance={(address) => fetchWETHBalance(address)}
+              loadBalance={(address) => { Promise.all([fetchWETHBalance(address), fetchTokenBalance(address)]); }}
               extraGasForMiner={state.extraGasForMiner}
               handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
               addTokenToStorage={(address) => addTokenToStorage(address)}
               ref={state.ref}
+              additionalGas={state.additionalGas}
             />
           )}
 
@@ -817,25 +834,6 @@ export default function Home({ qreferralLink }) {
                 </button>
               </div>
             </div>
-
-            // <div className="mt-4 text-center">
-            //   <p className="text-gray-600 text-sm">Your referral link:</p>
-            //   <div className="flex items-center justify-center space-x-2">
-            //     <input
-            //       type="text"
-            //       readOnly
-            //       value={referralLink}
-            //       className="border border-gray-300 rounded px-2 py-1 text-gray-700 text-sm"
-            //       style={{ width: "80%" }}
-            //     />
-            //     <button onClick={handleCopyLink} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded">
-            //       Copy
-            //     </button>
-            //     <button onClick={handleShareOnX} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded">
-            //       Share on X
-            //     </button>
-            //   </div>
-            // </div>
           )}
         </div>
       </div>
