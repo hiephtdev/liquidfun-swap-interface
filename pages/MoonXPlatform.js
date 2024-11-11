@@ -30,17 +30,28 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
     };
 
     // Hàm tạo instance của token để thực hiện lệnh `approve`
-    const getTokenContractInstance = () => new ethers.Contract(
-        tokenAdress,
-        [
-            "function symbol() view returns (string)",
-            "function decimals() view returns (uint8)",
-            "function balanceOf(address) view returns (uint256)",
-            "function approve(address spender, uint256 amount) external returns (bool)",
-            "function allowance(address owner, address spender) view returns (uint256)"
-        ],
-        wallet
-    );
+    const getTokenContractInstance = async () => {
+        let currentWallet = wallet;
+        if (useBrowserWallet) {
+            // check chainid
+            if (wallet.chainId !== `eip155:${chainId}`) {
+                await wallet.switchChain(parseInt(chainId));
+            }
+            const provider = await wallet.getEthersProvider();
+            currentWallet = provider.getSigner();
+        }
+        return new ethers.Contract(
+            tokenAdress,
+            [
+                "function symbol() view returns (string)",
+                "function decimals() view returns (uint8)",
+                "function balanceOf(address) view returns (uint256)",
+                "function approve(address spender, uint256 amount) external returns (bool)",
+                "function allowance(address owner, address spender) view returns (uint256)"
+            ],
+            currentWallet
+        )
+    };
 
     // Hàm xử lý giao dịch
     const handleTransaction = async () => {
@@ -87,7 +98,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
 
     // Hàm xử lý `approve` và thực hiện giao dịch bán
     const handleSellWithApprove = async (contract) => {
-        const tokenContract = getTokenContractInstance();
+        const tokenContract = await getTokenContractInstance();
         const spenderAddress = process.env.NEXT_PUBLIC_MOONX_CONTRACT_ADDRESS;
 
         // Kiểm tra allowance
@@ -128,7 +139,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
                 { value: ethers.parseEther(amount), gasLimit, ...gasOptions }
             );
         } else {
-            const tokenContract = getTokenContractInstance();
+            const tokenContract = await getTokenContractInstance();
             const spenderAddress = process.env.NEXT_PUBLIC_MOONX_CONTRACT_ADDRESS;
 
             // Kiểm tra allowance
