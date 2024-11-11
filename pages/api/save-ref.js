@@ -12,6 +12,14 @@ export default async function handler(req, res) {
   try {
     const { walletAddress, refParam } = req.body;
 
+    if (!walletAddress || !refParam) {
+      return res.status(400).json({ message: 'Missing walletAddress or refParam' });
+    }
+
+    if (`${walletAddress}`.toLowerCase() === `${refParam}`.toLowerCase()) {
+      return res.status(400).json({ message: 'walletAddress and refParam cannot be the same' });
+    }
+
     // Kiểm tra nếu đã tồn tại `refParam` cho `walletAddress` này
     const existingRef = await Ref.findOne({ walletAddress });
     if (existingRef && existingRef.refParam) {
