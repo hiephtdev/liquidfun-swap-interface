@@ -11,7 +11,6 @@ import FarcasterShareIcon from "@/components/icons/FarcasterShareIcon";
 import Head from "next/head";
 
 export async function getServerSideProps(context) {
-  console.log('context', context)
   const { query } = context;
   const refAddress = query.ref || ethers.ZeroAddress; // Lấy giá trị của `ref` từ URL
   const qreferralLink = `https://fun.moonx.farm/?ref=${refAddress}`;
@@ -354,7 +353,7 @@ export default function Home({ qreferralLink }) {
       console.error("Failed to initialize wallet:", error);
       setState(prevState => ({ ...prevState, errorMessage: "Failed to initialize wallet" }));
     }
-  }, [state.useBrowserWallet, state.privateKey, state.chainId]);
+  }, [state.useBrowserWallet, state.privateKey, state.chainId, state.platform]);
 
   useEffect(() => {
     initializeWallet();

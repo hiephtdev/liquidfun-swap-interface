@@ -12,6 +12,7 @@ export default async function handler(req, res) {
   try {
     const { walletAddress } = req.query;
     const result = await Ref.findOne({ walletAddress });
+    console.log('result:', result, walletAddress);
     res.status(200).json({ refParam: result ? result.refParam : null });
   } catch (error) {
     console.error('Error fetching refParam:', error);
