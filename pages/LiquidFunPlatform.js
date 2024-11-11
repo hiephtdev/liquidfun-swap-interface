@@ -106,7 +106,7 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
             loadBalance(currentWallet.address);
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch mua trên LiquidFun:", error);
-            setErrorMessage(`Error executing buy transaction on LiquidFun: ${error.shortMessage ?? error.message ?? error}`);
+            setErrorMessage(`Error executing buy transaction on LiquidFun: ${error.reason ?? error.shortMessage ?? error.message ?? error}`);
         } finally {
             setLoading(false);
         }
@@ -148,7 +148,7 @@ export default function LiquidFunPlatform({ isBuyMode, wallet, amount, platformW
             loadBalance(currentWallet.address);
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch bán trên LiquidFun:", error);
-            setErrorMessage(`Error executing sell transaction on LiquidFun: ${error.shortMessage ?? error.message ?? error}`);
+            setErrorMessage(`Error executing sell transaction on LiquidFun: ${error.reason ?? error.shortMessage ?? error.message ?? error}`);
         } finally {
             setLoading(false);
         }

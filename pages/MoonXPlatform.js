@@ -79,7 +79,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
             loadBalance(wallet.address);
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch trên MoonX:", error);
-            setErrorMessage(`Error executing transaction: ${error.shortMessage ?? error.message ?? error}`);
+            setErrorMessage(`Error executing transaction: ${error.reason ?? error.shortMessage ?? error.message ?? error}`);
         } finally {
             setLoading(false);
         }
