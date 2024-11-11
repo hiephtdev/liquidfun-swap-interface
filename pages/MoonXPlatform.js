@@ -289,9 +289,9 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
         const factory = new ethers.Contract(chainsConfig[chainId].factory, factoryAbi, provider);
         const quoter = new ethers.Contract(chainsConfig[chainId].quote, quoterAbi, provider);
 
-        if (amountIn <= 0n) return 0n;
+        if (amountIn <= 0n) return { amountOutMin: 0n, poolAddress: ethers.ZeroAddress };
         if (!ethers.isAddress(tokenIn) || !ethers.isAddress(tokenOut)) {
-            return 0n;
+            return { amountOutMin: 0n, poolAddress: ethers.ZeroAddress };
         }
 
         let bestQuote = 0n;
@@ -320,13 +320,12 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
                     bestQuote = amountOut;
                 }
             } catch (error) {
-                console.error("Quote failed for fee tier:", fee, error);
                 continue; // Bỏ qua nếu lỗi xảy ra
             }
         }
 
         if (bestQuote === 0n) {
-            return 0n;
+            return { amountOutMin: 0n, poolAddress: ethers.ZeroAddress };
         }
 
         // Tính toán amountOutMin với độ trượt giá
