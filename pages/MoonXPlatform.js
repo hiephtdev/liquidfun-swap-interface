@@ -121,21 +121,12 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
                 gasOptions = { gasPrice: gasData.gasPrice * 2n }
             }
 
-            const buyTx = await contract.moonXBuy(
+            return await contract.moonXBuy(
                 tokenAdress,
                 slippage,
                 referral,
                 { value: ethers.parseEther(amount), gasLimit, ...gasOptions }
             );
-
-            const tokenContract = getTokenContractInstance();
-            // Kiểm tra allowance
-            const [allowance, tokenAmout] = await Promise.all([tokenContract.allowance(wallet.address, process.env.NEXT_PUBLIC_MOONX_CONTRACT_ADDRESS), tokenContract.balanceOf(wallet.address)]);
-            if (allowance < tokenAmout) {
-                const approveTx = await tokenContract.approve(process.env.NEXT_PUBLIC_MOONX_CONTRACT_ADDRESS, tokenAmout);
-                await approveTx.wait();
-            }
-            return buyTx;
         } else {
             const tokenContract = getTokenContractInstance();
             const spenderAddress = process.env.NEXT_PUBLIC_MOONX_CONTRACT_ADDRESS;
