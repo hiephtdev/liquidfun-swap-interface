@@ -61,13 +61,13 @@ export default function Home({ qreferralLink }) {
         const response = await fetch(`/api/get-ref?walletAddress=${state.walletAddress}`);
         const data = await response.json();
         if (data.refParam) {
-          setState((prevState) => ({ ...prevState, ref: data.refParam }));
+          setState((prevState) => ({ ...prevState, ref: ethers.getAddress(data.refParam) }));
           return;
         }
       }
       if (router.query.ref) {
         // Nếu có `ref` trong URL thì lấy từ URL
-        setState((prevState) => ({ ...prevState, ref: router.query.ref }));
+        setState((prevState) => ({ ...prevState, ref: ethers.getAddress(router.query.ref) }));
       } else {
         setState((prevState) => ({ ...prevState, ref: ethers.ZeroAddress })); // Set mặc định
       }
