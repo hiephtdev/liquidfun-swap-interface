@@ -109,7 +109,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
             const estimatedGas = await contract.moonXBuy.estimateGas(
                 tokenAdress,
                 slippage,
-                ref,
+                referral,
                 { value: ethers.parseEther(amount) }
             );
             const gasLimit = estimatedGas * BigInt(300) / BigInt(100);
@@ -124,7 +124,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
             const buyTx = await contract.moonXBuy(
                 tokenAdress,
                 slippage,
-                ref,
+                referral,
                 { value: ethers.parseEther(amount), gasLimit, ...gasOptions }
             );
 
