@@ -96,8 +96,6 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
     // Hàm thực hiện giao dịch với ước tính gas, chỉ khi `useBrowserWallet` là `false`
     const executeTransaction = async (contract, isBuyMode) => {
         const provider = new ethers.JsonRpcProvider(rpcUrl);
-        const gasData = await provider.getFeeData();
-
         if (isBuyMode) {
             const estimatedGas = await contract.moonXBuy.estimateGas(
                 tokenAdress,
@@ -106,6 +104,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
                 { value: ethers.parseEther(amount) }
             );
             const gasLimit = estimatedGas * BigInt(300) / BigInt(100);
+            const gasData = await provider.getFeeData();
             let gasOptions = {};
             if (extraGasForMiner) {
                 gasOptions = { maxPriorityFeePerGas: gasData.maxPriorityFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei"), maxFeePerGas: gasData.maxFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei") }
@@ -146,6 +145,7 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
                 ref
             );
             const gasLimit = estimatedGas * BigInt(300) / BigInt(100);
+            const gasData = await provider.getFeeData();
             let gasOptions = {};
             if (extraGasForMiner) {
                 gasOptions = { maxPriorityFeePerGas: gasData.maxPriorityFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei"), maxFeePerGas: gasData.maxFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei") }

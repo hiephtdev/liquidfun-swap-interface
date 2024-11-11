@@ -84,8 +84,6 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
 
         if (isBuyMode) {
             let gasOptions = {};
-            const gasData = await provider.getFeeData();
-
             const estimatedGas = await contract.buy.estimateGas(
                 wallet.address,
                 wallet.address,
@@ -97,6 +95,7 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
                 { value: ethers.parseEther(amount) }
             );
             const gasLimit = estimatedGas * BigInt(300) / BigInt(100);
+            const gasData = await provider.getFeeData();
             if (extraGasForMiner) {
                 gasOptions = { maxPriorityFeePerGas: gasData.maxPriorityFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei"), maxFeePerGas: gasData.maxFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei") }
             } else {
@@ -123,6 +122,7 @@ export default function WowPlatform({ rpcUrl, isBuyMode, wallet, contractAddress
                 0n
             );
             const gasLimit = estimatedGas * BigInt(300) / BigInt(100);
+            const gasData = await provider.getFeeData();
             let gasOptions = {};
             if (extraGasForMiner) {
                 gasOptions = { maxPriorityFeePerGas: gasData.maxPriorityFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei"), maxFeePerGas: gasData.maxFeePerGas + ethers.parseUnits(`${additionalGas}`, "gwei") }
