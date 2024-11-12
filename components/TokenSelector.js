@@ -137,11 +137,16 @@ const TokenSelector = ({ state, handleStateChange, handleToggleMode, fetchTokenB
         <label className="block mb-1 font-medium text-gray-600">Amount</label>
         <div className="flex items-center">
           <input
-            type="number"
+            type="text"
             value={state.amount}
-            min={0}
-            step={0.01}
-            onChange={(e) => handleStateChange("amount", e.target.value)}
+            onChange={(e) => {
+              // Chỉ cập nhật state nếu giá trị hợp lệ hoàn toàn (số hoặc số thập phân hoàn chỉnh)
+              const value = e.target.value;
+              if (/^\d*\.?\d*$/.test(value)) {
+                handleStateChange("amount", value);
+              }
+            }}
+            onInput={(e) => { e.target.value = e.target.value.replace(/[^0-9.]/g, '') }}
             className="flex-grow p-3 bg-gray-50 rounded-lg text-black border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter amount"
           />

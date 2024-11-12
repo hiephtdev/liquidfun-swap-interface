@@ -56,6 +56,21 @@ export default function Home({ qreferralLink }) {
     }
   }, [connectPrivyWallet]);
 
+  // Ngắt kết nối ví
+  const disconnectWallet = useCallback(() => {
+    setState(prevState => ({
+      ...prevState,
+      walletAddress: "",
+      balance: "0",
+      amount: "0"
+    }));
+    if (wallets && wallets.length > 0) {
+      for (let connectWallet of wallets) {
+        connectWallet.disconnect();
+      }
+    }
+  }, []);
+
   useEffect(() => {
     const callbackWhenConnected = async () => {
       try {
@@ -86,6 +101,7 @@ export default function Home({ qreferralLink }) {
   }, [wallets, state.ref, state.chainId, state.platform]);
 
   const initializeWallet = useCallback(async () => {
+    if (!state.chainId) return;
     const provider = getProvider(state.chainId);
     if (state.useBrowserWallet && wallets.length) setWallet(wallets[0]);
     else if (state.privateKey && isValidPrivateKey(state.privateKey)) {
@@ -99,7 +115,7 @@ export default function Home({ qreferralLink }) {
   }, [state.useBrowserWallet, state.privateKey, state.chainId, wallets]);
 
   const fetchWETHBalance = async (address) => {
-    if (address && chainsConfig[state.chainId]?.tokens.WETH) {
+    if (address && state.chainId && chainsConfig[state.chainId]?.tokens.WETH) {
       const provider = getProvider(state.chainId);
       const wethContract = new ethers.Contract(
         chainsConfig[state.chainId].tokens.WETH,
@@ -117,7 +133,7 @@ export default function Home({ qreferralLink }) {
   };
 
   const fetchTokenBalance = async (address) => {
-    if (address && state.srcToken) {
+    if (address && state.srcToken && state.chainId) {
       const provider = getProvider(state.chainId);
       const contract = new ethers.Contract(
         ethers.getAddress(state.srcToken),
@@ -131,16 +147,33 @@ export default function Home({ qreferralLink }) {
     }
   };
 
-  const addTokenToStorage = (tokenAddress, symbol) => {
-    const updatedTokens = [...state.purchasedTokens, { address: tokenAddress, symbol }];
-    setState((prev) => ({ ...prev, purchasedTokens: updatedTokens }));
-    localStorage.setItem(`mys:${state.platform}-purchasedTokens`, JSON.stringify(updatedTokens));
+  const addTokenToStorage = async (tokenAddress) => {
+    try {
+      if (state.purchasedTokens.find(token => token.address === tokenAddress)) return;
+      const provider = getProvider(state.chainId);
+      const contract = new ethers.Contract(
+        tokenAddress,
+        ["function symbol() view returns (string)"],
+        provider
+      );
+      const symbol = await contract.symbol();
+      const newToken = { address: tokenAddress, symbol };
+      const updatedTokens = [...state.purchasedTokens, newToken];
+      localStorage.setItem(`mys:${state.platform}-purchasedTokens`, JSON.stringify(updatedTokens));
+      setState((prevState) => ({ ...prevState, purchasedTokens: updatedTokens }));
+    } catch (error) {
+      console.error("Error fetching token symbol:", error);
+    }
   };
 
   const removeTokenFromStorage = (tokenAddress) => {
-    const updatedTokens = state.purchasedTokens.filter((token) => token.address !== tokenAddress);
-    setState((prev) => ({ ...prev, purchasedTokens: updatedTokens }));
-    localStorage.setItem(`mys:${state.platform}-purchasedTokens`, JSON.stringify(updatedTokens));
+    try {
+      const updatedTokens = state.purchasedTokens.filter(token => token.address !== tokenAddress);
+      localStorage.setItem(`mys:${state.platform}-purchasedTokens`, JSON.stringify(updatedTokens));
+      setState((prevState) => ({ ...prevState, purchasedTokens: updatedTokens }));
+    } catch (error) {
+      console.error("Error removing token:", error);
+    }
   };
 
   const handlePlatformChange = (platform) => setState((prev) => ({ ...prev, platform }));
@@ -162,7 +195,7 @@ export default function Home({ qreferralLink }) {
   useEffect(() => { fetchRefParam(); }, [router.query, state.walletAddress]);
   useEffect(() => { loadPurchasedTokens(); }, [state.platform]);
   useEffect(() => { initializeWallet(); }, [initializeWallet]);
-  useEffect(() => { if (state.walletAddress && !state.isBuyMode) fetchTokenBalance(state.walletAddress); else setState((prev) => ({ ...prev, balance: 0, amount: 0 })); }, [state.walletAddress, state.isBuyMode, state.srcToken, state.platform, state.chainId]);
+  useEffect(() => { if (state.walletAddress && !state.isBuyMode) fetchTokenBalance(state.walletAddress); else setState((prev) => ({ ...prev, balance: "0", amount: "0" })); }, [state.walletAddress, state.isBuyMode, state.srcToken, state.platform, state.chainId]);
   useEffect(() => { if (state.walletAddress) fetchWETHBalance(state.walletAddress); }, [state.walletAddress, state.chainId, state.srcToken, state.destToken, state.platform]);
 
   return (
@@ -178,7 +211,7 @@ export default function Home({ qreferralLink }) {
       </Head>
       <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-10 flex justify-center items-center">
         <div className="w-full max-w-xl bg-white p-6 rounded-xl shadow-lg shadow-gray-400/30 relative">
-          <HeaderSection state={state} connectWallet={connectWallet} />
+          <HeaderSection state={state} connectWallet={connectWallet} disconnectWallet={disconnectWallet} />
           <PlatformSelection platform={state.platform} handlePlatformChange={handlePlatformChange} />
           <TokenSelector
             state={state}

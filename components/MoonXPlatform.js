@@ -177,7 +177,7 @@ export default function MoonXPlatform({
   useEffect(() => {
     const fetchAmountOutMin = async () => {
       try {
-        if (!amount || amount === "0") {
+        if (!amount || amount === "0" || Number.parseFloat(amount) <= 0) {
           setDisplayAmount("0");
           return;
         }

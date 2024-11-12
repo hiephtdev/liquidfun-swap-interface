@@ -2,7 +2,7 @@ import React from "react";
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { chainsConfig } from "@/constants/common";
 
-const HeaderSection = ({ state, connectWallet }) => {
+const HeaderSection = ({ state, connectWallet, disconnectWallet }) => {
   const formatWalletAddress = (address) => {
     return address ? `${address.slice(0, 6)}...${address.slice(-5)}` : "";
   };
@@ -51,7 +51,7 @@ const HeaderSection = ({ state, connectWallet }) => {
                 Balance: {Number.parseFloat(state.ethBalance).toFixed(6)} ETH
               </p>
               <button
-                onClick={() => state.setState((prevState) => ({ ...prevState, walletAddress: "", balance: "0", amount: "0" }))}
+                onClick={disconnectWallet}
                 className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 rounded-lg transition"
               >
                 Disconnect Wallet
