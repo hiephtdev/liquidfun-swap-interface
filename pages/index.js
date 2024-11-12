@@ -162,7 +162,7 @@ export default function Home({ qreferralLink }) {
   useEffect(() => { fetchRefParam(); }, [router.query, state.walletAddress]);
   useEffect(() => { loadPurchasedTokens(); }, [state.platform]);
   useEffect(() => { initializeWallet(); }, [initializeWallet]);
-  useEffect(() => { if (state.walletAddress && !state.isBuyMode) fetchTokenBalance(state.walletAddress); else setState((prev) => ({ ...prev, balance: 0.01, amount: 0.01 })); }, [state.walletAddress, state.isBuyMode, state.srcToken, state.platform, state.chainId]);
+  useEffect(() => { if (state.walletAddress && !state.isBuyMode) fetchTokenBalance(state.walletAddress); else setState((prev) => ({ ...prev, balance: 0, amount: 0 })); }, [state.walletAddress, state.isBuyMode, state.srcToken, state.platform, state.chainId]);
   useEffect(() => { if (state.walletAddress) fetchWETHBalance(state.walletAddress); }, [state.walletAddress, state.chainId, state.srcToken, state.destToken, state.platform]);
 
   return (

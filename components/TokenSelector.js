@@ -137,7 +137,7 @@ const TokenSelector = ({ state, handleStateChange, handleToggleMode, fetchTokenB
         <label className="block mb-1 font-medium text-gray-600">Amount</label>
         <div className="flex items-center">
           <input
-            type="text"
+            type="number"
             value={state.amount}
             min={0}
             step={0.01}
