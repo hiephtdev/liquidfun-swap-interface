@@ -98,9 +98,6 @@ export default function WowPlatform({
       const receipt = await transaction.wait();
       handleTransactionComplete(transaction.hash);
       loadBalance(wallet.address);
-      if (!isBuyMode) {
-        removeTokenFromStorage(contractAddress);
-      }
     } catch (error) {
       setErrorMessage(`Error executing transaction: ${error.reason ?? error.shortMessage ?? error.message ?? error}`);
     } finally {

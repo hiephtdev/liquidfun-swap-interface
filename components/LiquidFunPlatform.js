@@ -156,7 +156,6 @@ export default function LiquidFunPlatform({
       await tx.wait();
       handleTransactionComplete(tx.hash);
       loadBalance(currentWallet.address);
-      removeTokenFromStorage(srcToken);
     } catch (error) {
       console.error("Error executing sell transaction on LiquidFun:", error);
       setErrorMessage(`Error executing sell transaction on LiquidFun: ${error.message ?? error}`);
