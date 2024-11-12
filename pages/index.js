@@ -184,7 +184,6 @@ export default function Home({ qreferralLink }) {
         if (wallets && wallets.length > 0) {
           setState(prevState => ({ ...prevState, errorMessage: "" }));
           const address = wallets[0].address;
-          setState(prevState => ({ ...prevState, walletAddress: address }));
           localStorage.setItem("mys:liquidfun-connectedWalletAddress", address);
 
           // Lưu `refParam` vào db khi có refParam
@@ -336,8 +335,8 @@ export default function Home({ qreferralLink }) {
 
       setState(prevState => ({
         ...prevState,
-        balance: balance,
-        amount: !prevState.isBuyMode ? balance : prevState.amount // Auto fill amount in Sell Mode
+        balance: `${balance}`,
+        amount: `${balance}` // Auto fill amount in Sell Mode
       }));
     } catch (error) {
       console.error("Lỗi khi lấy số dư token:", error);
@@ -383,7 +382,7 @@ export default function Home({ qreferralLink }) {
     if (state.walletAddress && !state.isBuyMode) {
       fetchTokenBalance(state.walletAddress); // Lấy số dư khi ở chế độ bán
     }
-  }, [state.walletAddress, state.isBuyMode, fetchTokenBalance]);
+  }, [state.walletAddress, state.isBuyMode, fetchTokenBalance, wallets]);
 
   const togglePlatform = (platform) => {
     setState(prevState => ({ ...prevState, platform }));
