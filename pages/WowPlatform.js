@@ -71,10 +71,10 @@ export default function WowPlatform({ chainId, rpcUrl, isBuyMode, wallet, contra
             }
 
             const transactionOptions = isBuyMode ? { value: ethers.parseEther(amount) } : {};
+            if (!isBuyMode) {
+                await approve();
+            }
             if (useBrowserWallet) {
-                if (!isBuyMode) {
-                    await approve();
-                }
                 // Transaction when using the browser wallet
                 transaction = await contract.placeOrder(
                     contractAddress,
