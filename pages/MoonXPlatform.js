@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { chainsConfig } from "@/constants/common";
 
-export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, tokenAdress, slippage, amount, useBrowserWallet, handleTransactionComplete, loadBalance, addTokenToStorage, extraGasForMiner, referral, additionalGas }) {
+export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, tokenAdress, slippage, amount, useBrowserWallet, handleTransactionComplete, loadBalance, addTokenToStorage, extraGasForMiner, referral, additionalGas, removeTokenFromStorage }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [loadingAmountOut, setLoadingAmountOut] = useState(false);
@@ -88,6 +88,9 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
             await transaction.wait();
             handleTransactionComplete(transaction.hash);
             loadBalance(wallet.address);
+            if (!isBuyMode) {
+                removeTokenFromStorage(tokenAdress);
+            }
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch trên MoonX:", error);
             setErrorMessage(`Error executing transaction: ${error.reason ?? error.shortMessage ?? error.message ?? error}`);

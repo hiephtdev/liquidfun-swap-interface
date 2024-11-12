@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
 
-export default function WowPlatform({ chainId, rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete, loadBalance, addTokenToStorage, extraGasForMiner, additionalGas }) {
+export default function WowPlatform({ chainId, rpcUrl, isBuyMode, wallet, contractAddress, amount, useBrowserWallet, handleTransactionComplete, loadBalance, addTokenToStorage, extraGasForMiner, additionalGas, removeTokenFromStorage }) {
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -79,6 +79,9 @@ export default function WowPlatform({ chainId, rpcUrl, isBuyMode, wallet, contra
             await transaction.wait();
             handleTransactionComplete(transaction.hash);
             loadBalance(wallet.address);
+            if (!isBuyMode) {
+                removeTokenFromStorage(contractAddress);
+            }
         } catch (error) {
             console.error("Lỗi khi thực hiện giao dịch trên Wow:", error);
             debugger

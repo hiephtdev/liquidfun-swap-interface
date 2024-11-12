@@ -12,9 +12,14 @@ import Head from "next/head";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export async function getServerSideProps(context) {
-  const { query } = context;
-  const refAddress = query.ref || ethers.ZeroAddress; // Lấy giá trị của `ref` từ URL
-  const qreferralLink = `https://fun.moonx.farm/?ref=${refAddress}`;
+  let qreferralLink = "https://fun.moonx.farm";
+  try {
+    const { query } = context;
+    const refAddress = query.ref || ethers.ZeroAddress; // Lấy giá trị của `ref` từ URL
+    qreferralLink = `https://fun.moonx.farm/?ref=${refAddress}`;
+  } catch (error) {
+    console.error("Error fetching tokens:", error);
+  }
 
   return {
     props: {
@@ -123,6 +128,18 @@ export default function Home({ qreferralLink }) {
       setState((prevState) => ({ ...prevState, errorMessage: "Failed to add token" }));
     }
   };
+
+  const removeTokenFromStorage = (tokenAddress) => {
+    try {
+      const updatedTokens = state.purchasedTokens.filter(token => token.address !== tokenAddress);
+      localStorage.setItem(`mys:${state.platform}-purchasedTokens`, JSON.stringify(updatedTokens));
+      setState((prevState) => ({ ...prevState, purchasedTokens: updatedTokens }));
+    } catch (error) {
+      console.error("Error removing token:", error);
+      setState((prevState) => ({ ...prevState, errorMessage: "Failed to remove token" }));
+    }
+  };
+
 
   const fetchTokenSymbol = async (tokenAddress) => {
     const isAlreadyStored = state.purchasedTokens.find(token => token.address === tokenAddress);
@@ -397,12 +414,12 @@ export default function Home({ qreferralLink }) {
     <>
       <Head>
         <title>MoonX Farm - Fast and Secure Token Trading on LiquidFun & Wow.XYZ</title>
-        <meta property="og:url" content={qreferralLink} />
+        <meta property="og:url" content={qreferralLink ?? "https://fun.moonx.farm"} />
         <meta property="fc:frame" content="vNext" />
         <meta property="fc:frame:image" content="https://fun.moonx.farm/card.jpg" />
         <meta property="fc:frame:button:1" content="Trade Now" />
         <meta property="fc:frame:button:1:action" content="link" />
-        <meta property="fc:frame:button:1:target" content={qreferralLink} />
+        <meta property="fc:frame:button:1:target" content={qreferralLink ?? "https://fun.moonx.farm"} />
       </Head>
       <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-10 flex justify-center items-center">
         <div className="w-full max-w-xl bg-white p-6 rounded-xl shadow-lg shadow-gray-400/30 relative">
@@ -760,6 +777,7 @@ export default function Home({ qreferralLink }) {
               loadBalance={(address) => { Promise.all([fetchWETHBalance(address), fetchTokenBalance(address)]); }}
               handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
               addTokenToStorage={(address) => addTokenToStorage(address)}
+              removeTokenFromStorage={(address) => removeTokenFromStorage(address)}
             />
           ) : state.platform === "wow" ? (
             <WowPlatform
@@ -773,6 +791,7 @@ export default function Home({ qreferralLink }) {
               extraGasForMiner={state.extraGasForMiner}
               handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
               addTokenToStorage={(address) => addTokenToStorage(address)}
+              removeTokenFromStorage={(address) => removeTokenFromStorage(address)}
               additionalGas={state.additionalGas}
               chainId={state.chainId}
             />
@@ -790,6 +809,7 @@ export default function Home({ qreferralLink }) {
               extraGasForMiner={state.extraGasForMiner}
               handleTransactionComplete={(hash) => setState(prevState => ({ ...prevState, transactionHash: hash }))}
               addTokenToStorage={(address) => addTokenToStorage(address)}
+              removeTokenFromStorage={(address) => removeTokenFromStorage(address)}
               referral={state.ref}
               additionalGas={state.additionalGas}
             />
