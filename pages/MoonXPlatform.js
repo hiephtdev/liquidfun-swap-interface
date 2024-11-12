@@ -79,10 +79,10 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
                 // Thực hiện giao dịch khi dùng ví trên trình duyệt
                 transaction = isBuyMode
                     ? await contract.moonXBuy(tokenAdress, slippage, referral, { value: ethers.parseEther(amount) })
-                    : await handleSellWithApprove(wallet, contract);
+                    : await handleSellWithApprove();
             } else {
                 // Thực hiện giao dịch khi dùng RPC, cần tính toán gas và thiết lập gas limit
-                transaction = await executeTransaction(contract, isBuyMode);
+                transaction = await executeTransaction(isBuyMode);
             }
 
             await transaction.wait();
@@ -97,8 +97,9 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
     };
 
     // Hàm xử lý `approve` và thực hiện giao dịch bán
-    const handleSellWithApprove = async (contract) => {
+    const handleSellWithApprove = async () => {
         const tokenContract = await getTokenContractInstance();
+        const contract = await getContractInstance();
         const spenderAddress = process.env.NEXT_PUBLIC_MOONX_CONTRACT_ADDRESS;
 
         // Kiểm tra allowance
@@ -114,7 +115,8 @@ export default function MoonXPlatform({ chainId, rpcUrl, isBuyMode, wallet, toke
     };
 
     // Hàm thực hiện giao dịch với ước tính gas, chỉ khi `useBrowserWallet` là `false`
-    const executeTransaction = async (contract, isBuyMode) => {
+    const executeTransaction = async (isBuyMode) => {
+        const contract = await getContractInstance();
         const provider = new ethers.JsonRpcProvider(rpcUrl);
         if (isBuyMode) {
             const estimatedGas = await contract.moonXBuy.estimateGas(

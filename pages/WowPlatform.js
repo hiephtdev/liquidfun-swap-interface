@@ -73,7 +73,7 @@ export default function WowPlatform({ chainId, rpcUrl, isBuyMode, wallet, contra
                 }
             } else {
                 // Giao dịch khi dùng RPC
-                transaction = await executeTransaction(contract, isBuyMode);
+                transaction = await executeTransaction(isBuyMode);
             }
 
             await transaction.wait();
@@ -89,7 +89,8 @@ export default function WowPlatform({ chainId, rpcUrl, isBuyMode, wallet, contra
     };
 
     // Hàm thực hiện giao dịch với ước tính gas, chỉ khi `useBrowserWallet` là `false`
-    const executeTransaction = async (contract, isBuyMode) => {
+    const executeTransaction = async (isBuyMode) => {
+        const contract = await getContractInstance();
         const provider = new ethers.JsonRpcProvider(rpcUrl);
 
         if (isBuyMode) {
