@@ -342,7 +342,7 @@ export default function Home({ qreferralLink }) {
       console.error("Lỗi khi lấy số dư token:", error);
       setState(prevState => ({ ...prevState, balance: "0", errorMessage: "Error fetching token balance" }));
     }
-  }, [state.srcToken, state.chainId, state.platform, getProvider, state.destToken]);
+  }, [state.srcToken, state.chainId, state.platform, getProvider]);
 
   // Hàm kiểm tra tính hợp lệ của Private Key
   const isValidPrivateKey = (key) => {
