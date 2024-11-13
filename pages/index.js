@@ -198,7 +198,6 @@ export default function Home({ qreferralLink }) {
             platform={state.platform}
             state={state}
             wallet={wallet}
-            addTokenToStorage={addTokenToStorage}
             handleStateChange={handleStateChange}
             fetchTokenBalance={fetchTokenBalance}
             fetchWETHBalance={fetchWETHBalance}
