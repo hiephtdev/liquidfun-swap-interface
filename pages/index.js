@@ -39,7 +39,7 @@ export default function Home({ qreferralLink }) {
 
   const loadPurchasedTokens = () => {
     if (typeof window !== "undefined") {
-      const tokens = JSON.parse(localStorage.getItem(`mys:${state.platform}-purchasedTokens`)) || [];
+      const tokens = JSON.parse(localStorage.getItem(`mys:${state.platform}-2-purchasedTokens`)) || [];
       setState((prev) => ({ ...prev, purchasedTokens: tokens }));
     }
   };
@@ -106,6 +106,7 @@ export default function Home({ qreferralLink }) {
     if (state.useBrowserWallet && wallets.length) setWallet(wallets[0]);
     else if (state.privateKey && isValidPrivateKey(state.privateKey)) {
       const selectedWallet = new ethers.Wallet(state.privateKey, provider);
+      setState((prev) => ({ ...prev, walletAddress: selectedWallet.address }));
       setWallet(selectedWallet);
     } else {
       if (wallets.length) setWallet(wallets[0]);
@@ -144,35 +145,6 @@ export default function Home({ qreferralLink }) {
       const [balance, decimals] = await Promise.all([contract.balanceOf(address), contract.decimals()]);
       const balanceOf = new Intl.NumberFormat("en-US", { maximumFractionDigits: 5 }).format(ethers.formatUnits(balance, decimals))
       setState((prev) => ({ ...prev, balance: `${balance}`, fomartAmount: balanceOf, amount: `${balance}` }));
-    }
-  };
-
-  const addTokenToStorage = async (tokenAddress) => {
-    try {
-      if (state.purchasedTokens.find(token => token.address === tokenAddress)) return;
-      const provider = getProvider(state.chainId);
-      const contract = new ethers.Contract(
-        tokenAddress,
-        ["function symbol() view returns (string)"],
-        provider
-      );
-      const symbol = await contract.symbol();
-      const newToken = { address: tokenAddress, symbol };
-      const updatedTokens = [...state.purchasedTokens, newToken];
-      localStorage.setItem(`mys:${state.platform}-purchasedTokens`, JSON.stringify(updatedTokens));
-      setState((prevState) => ({ ...prevState, purchasedTokens: updatedTokens }));
-    } catch (error) {
-      console.error("Error fetching token symbol:", error);
-    }
-  };
-
-  const removeTokenFromStorage = (tokenAddress) => {
-    try {
-      const updatedTokens = state.purchasedTokens.filter(token => token.address !== tokenAddress);
-      localStorage.setItem(`mys:${state.platform}-purchasedTokens`, JSON.stringify(updatedTokens));
-      setState((prevState) => ({ ...prevState, purchasedTokens: updatedTokens }));
-    } catch (error) {
-      console.error("Error removing token:", error);
     }
   };
 
@@ -227,7 +199,6 @@ export default function Home({ qreferralLink }) {
             state={state}
             wallet={wallet}
             addTokenToStorage={addTokenToStorage}
-            removeTokenFromStorage={removeTokenFromStorage}
             handleStateChange={handleStateChange}
             fetchTokenBalance={fetchTokenBalance}
             fetchWETHBalance={fetchWETHBalance}

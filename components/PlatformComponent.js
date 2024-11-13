@@ -9,19 +9,23 @@ const PlatformComponent = ({ platform, state, wallet, handleStateChange, fetchTo
     handleStateChange("transactionHash", hash);
   };
 
-  const addTokenToStorage = (address) => {
-    // Add the token to local storage and update the state with the new list
-    const newToken = { address };
-    const updatedTokens = [...state.purchasedTokens, newToken];
-    localStorage.setItem(`mys:${state.platform}-purchasedTokens`, JSON.stringify(updatedTokens));
-    handleStateChange("purchasedTokens", updatedTokens);
-  };
-
-  const removeTokenFromStorage = (address) => {
-    // Remove the token from local storage and update the state with the filtered list
-    const updatedTokens = state.purchasedTokens.filter((token) => token.address !== address);
-    localStorage.setItem(`mys:${state.platform}-purchasedTokens`, JSON.stringify(updatedTokens));
-    handleStateChange("purchasedTokens", updatedTokens);
+  const addTokenToStorage = async (tokenAddress) => {
+    try {
+      if (state.purchasedTokens.find(token => token.address === tokenAddress)) return;
+      const provider = getProvider(state.chainId);
+      const contract = new ethers.Contract(
+        tokenAddress,
+        ["function symbol() view returns (string)"],
+        provider
+      );
+      const symbol = await contract.symbol();
+      const newToken = { address: tokenAddress, symbol };
+      const updatedTokens = [...state.purchasedTokens, newToken];
+      localStorage.setItem(`mys:${state.platform}-2-purchasedTokens`, JSON.stringify(updatedTokens));
+      setState((prevState) => ({ ...prevState, purchasedTokens: updatedTokens }));
+    } catch (error) {
+      console.error("Error fetching token symbol:", error);
+    }
   };
 
   const loadBalance = (address) => {
@@ -44,7 +48,6 @@ const PlatformComponent = ({ platform, state, wallet, handleStateChange, fetchTo
           loadBalance={loadBalance}
           handleTransactionComplete={handleTransactionComplete}
           addTokenToStorage={addTokenToStorage}
-          removeTokenFromStorage={removeTokenFromStorage}
         />
       )}
       {platform === "wow" && (
@@ -59,7 +62,6 @@ const PlatformComponent = ({ platform, state, wallet, handleStateChange, fetchTo
           extraGasForMiner={state.extraGasForMiner}
           handleTransactionComplete={handleTransactionComplete}
           addTokenToStorage={addTokenToStorage}
-          removeTokenFromStorage={removeTokenFromStorage}
           additionalGas={state.additionalGas}
           chainId={state.chainId}
         />
@@ -78,7 +80,6 @@ const PlatformComponent = ({ platform, state, wallet, handleStateChange, fetchTo
           extraGasForMiner={state.extraGasForMiner}
           handleTransactionComplete={handleTransactionComplete}
           addTokenToStorage={addTokenToStorage}
-          removeTokenFromStorage={removeTokenFromStorage}
           referral={state.ref}
           additionalGas={state.additionalGas}
         />
