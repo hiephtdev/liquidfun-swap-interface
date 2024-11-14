@@ -83,9 +83,6 @@ export default function WowPlatform({
 
       setLoading(true);
       const contract = await getContractInstance();
-      if (isBuyMode) {
-        addTokenToStorage(contractAddress);
-      }
 
       // Approve the token if it’s a sell transaction
       if (!isBuyMode) await approve();
@@ -98,6 +95,9 @@ export default function WowPlatform({
       const receipt = await transaction.wait();
       handleTransactionComplete(transaction.hash);
       loadBalance(wallet.address);
+      if (isBuyMode) {
+        addTokenToStorage(contractAddress);
+      }
     } catch (error) {
       setErrorMessage(`Error executing transaction: ${error.reason ?? error.shortMessage ?? error.message ?? error}`);
     } finally {

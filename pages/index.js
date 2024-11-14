@@ -113,7 +113,7 @@ export default function Home({ qreferralLink }) {
       else
         setState((prev) => ({ ...prev, errorMessage: "No valid wallet method found." }));
     }
-  }, [state.useBrowserWallet, state.privateKey, state.chainId, wallets]);
+  }, [state.useBrowserWallet, state.privateKey, state.chainId, wallets, state.srcToken, state.destToken, state.platform]);
 
   const fetchWETHBalance = async (address) => {
     if (address && state.chainId && chainsConfig[state.chainId]?.tokens.WETH) {

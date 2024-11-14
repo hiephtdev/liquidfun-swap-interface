@@ -87,10 +87,6 @@ export default function MoonXPlatform({
       const contract = await getContractInstance();
       let transaction;
 
-      if (isBuyMode) {
-        addTokenToStorage(tokenAdress);
-      }
-
       if (useBrowserWallet) {
         // Executes transaction with browser wallet
         transaction = isBuyMode
@@ -104,6 +100,10 @@ export default function MoonXPlatform({
       await transaction.wait();
       handleTransactionComplete(transaction.hash);
       loadBalance(wallet.address);
+
+      if (isBuyMode) {
+        addTokenToStorage(tokenAdress);
+      }
     } catch (error) {
       console.error("Error executing transaction on MoonX:", error);
       setErrorMessage(`Error executing transaction: ${error.reason ?? error.shortMessage ?? error.message ?? error}`);
